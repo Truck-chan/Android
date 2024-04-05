@@ -4,10 +4,19 @@ import android.bluetooth.BluetoothSocket
 import android.util.Log
 import java.lang.IllegalStateException
 
-class SharedMemory(var socket: BluetoothSocket, var onDataChanged: (index: Int) -> Unit) {
+interface MemoryListener{
+    fun onDataChanged(index: Int) : Unit
+    fun onDisconnected() : Unit
+    fun onConnected() : Unit
+}
+class SharedMemory(var socket: BluetoothSocket) {
     private val TAG = "SharedMemory"
+
+    var memSize = 16
+    var listener: MemoryListener? = null
     private var _helper: ConnectionHelper
-    private var _mData = Array(128) { ByteArray(4) } // a 128x4 matrix
+    private var _mData       = Array(memSize) { ByteArray(4) } // a 128x4 matrix
+    private var _mDataChange = ByteArray(memSize) { 0 } // a 128x4 matrix
 
     init {
         if (!socket.isConnected){
@@ -17,7 +26,7 @@ class SharedMemory(var socket: BluetoothSocket, var onDataChanged: (index: Int) 
         _helper = ConnectionHelper(socket) {
                 data: ByteArray,
                 _: Int ->
-            val pos = data[0].toInt()
+            val pos = data[0].toInt() and 0xff
             if (pos > 127) { //top 127 are reserved for now
                 Log.e(TAG, "OnPacket: received an index out of bounds")
                 return@ConnectionHelper
@@ -28,39 +37,60 @@ class SharedMemory(var socket: BluetoothSocket, var onDataChanged: (index: Int) 
             _mData[pos][2] = data[3]
             _mData[pos][3] = data[4] //not the best way I know, but Im too lazy to fix it xD
 
-            onDataChanged(pos)
+            Log.i(TAG, "data[0]: ${data[1]}")
+            Log.i(TAG, "data[1]: ${data[2]}")
+            Log.i(TAG, "data[3]: ${data[3]}")
+            Log.i(TAG, "data[3]: ${data[4]}")
+
+            listener?.onDataChanged(pos)
         }
     }
 
     operator fun get(i: Int) : Int{
         val k: Int
         val arr = _mData[i]
-        k = (arr[0].toInt()) or
-                (arr[1].toInt() shr 8) or
-                (arr[1].toInt() shr 16) or
-                (arr[1].toInt() shr 24)
+        k =     ((arr[0].toInt() and 0xff)       ) or
+                ((arr[1].toInt() and 0xff) shl 8 ) or
+                ((arr[2].toInt() and 0xff) shl 16) or
+                ((arr[3].toInt() and 0xff) shl 24)
         return k
     }
 
     operator fun set(i: Int, v: Int) {
+        if (get(i) == v){
+            return
+        }
+
+        _mDataChange[i] = 1
         val arr = _mData[i]
         arr[0] = v.shr(0).toByte()
         arr[1] = v.shr(8).toByte()
         arr[2] = v.shr(16).toByte()
         arr[3] = v.shr(24).toByte()
-
-
-        _helper.send(Packet(byteArrayOf(
-            i.toByte(),
-            arr[0],
-            arr[1],
-            arr[2],
-            arr[3]
-        )))
+//        _helper.send(Packet(byteArrayOf(
+//            i.toByte(),
+//            arr[0],
+//            arr[1],
+//            arr[2],
+//            arr[3],
+//            )))
     }
-
 
     fun refresh(){
-        _helper.send((255).toByte().packet)
+        for (i in 0..<memSize){
+            if (_mDataChange[i].toInt() == 1){
+                val arr = _mData[i]
+                _helper.send(Packet(byteArrayOf(
+                    i.toByte(),
+                    arr[0],
+                    arr[1],
+                    arr[2],
+                    arr[3],
+                )))
+                _mDataChange[i] = 0
+            }
+        }
     }
+
+    var helper : ConnectionHelper = _helper
 }

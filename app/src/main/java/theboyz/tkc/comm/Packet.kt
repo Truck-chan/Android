@@ -20,3 +20,8 @@ val Byte.packet: Packet
     get() {
         return Packet(byteArrayOf(this))
     }
+
+val String.packet: Packet
+    get() {
+        return Packet(this.toByteArray())
+    }

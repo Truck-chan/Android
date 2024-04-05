@@ -14,7 +14,10 @@ class ConnectionViewModel : ViewModel(){
     }
 
     //Screen state
-    var state by mutableIntStateOf(STATE_CONNECTING)
+    var state by mutableIntStateOf(STATE_CONNECTED)
+
+    var running by mutableIntStateOf(0) //zero not playing , one playing
+    var baked   by mutableIntStateOf(0) //zero not baked , one baked
 
     //Logs
     var log = mutableListOf<String>()

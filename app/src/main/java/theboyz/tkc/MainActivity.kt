@@ -2,6 +2,7 @@ package theboyz.tkc
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.app.UiModeManager
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothManager
@@ -10,12 +11,14 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
+import androidx.annotation.RequiresApi
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.core.EaseIn
@@ -59,14 +62,19 @@ import androidx.core.app.ActivityCompat
 import theboyz.tkc.ui.component.UsersPreview
 import theboyz.tkc.ui.theme.TruckKunTheme
 
+
 private const val TAG = "MainActivity";
 
 class MainActivity : ComponentActivity() {
     val viewModel by viewModels<MainViewModel>()
     lateinit var bluetoothAdapter: BluetoothAdapter
 
+    @RequiresApi(Build.VERSION_CODES.S)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        val uiManager = getSystemService(UI_MODE_SERVICE) as UiModeManager
+        uiManager.setApplicationNightMode(UiModeManager.MODE_NIGHT_YES)
+
         actionBar?.hide();
 
         val bluetoothManager: BluetoothManager = getSystemService(BluetoothManager::class.java)
@@ -110,7 +118,7 @@ class MainActivity : ComponentActivity() {
                     val device: BluetoothDevice? =
                         intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE)
                     if (device == null) {
-                        Log.e(TAG, "onReceive: Device is null",)
+                        Log.e(TAG, "onReceive: Device is null")
                         return
                     }
                     val deviceName = device.name
@@ -190,18 +198,20 @@ fun MainContent() {
                     ){
                         Text(
                             modifier = Modifier.fillMaxWidth(),
-                            text = "Truck-kun",
+                            text = "Truck-chan",
                             fontSize = 64.sp,
                             fontWeight = FontWeight.Bold,
                             color = Color.Cyan,
-                            softWrap = true,)
+                            softWrap = true,
+                        )
                         Text(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .offset(y = -25.dp),
                             text = "Doko ?",
                             fontSize = 64.sp,
-                            softWrap = true,)
+                            softWrap = true,
+                        )
 
                         if (viewModel.state != MainViewModel.STATE_OFF) {
                             Button(
@@ -283,7 +293,8 @@ fun MainContent() {
                         .fillMaxWidth()
                         .offset(y = 40.dp),
                     fontSize = 18.sp,
-                    textAlign = TextAlign.Center,)
+                    textAlign = TextAlign.Center,
+                )
             }else{
                 Text(
                     text = "Searching ..",
@@ -291,7 +302,8 @@ fun MainContent() {
                         .fillMaxWidth()
                         .offset(y = 40.dp),
                     fontSize = 18.sp,
-                    textAlign = TextAlign.Center,)
+                    textAlign = TextAlign.Center,
+                )
             }
 
             UsersPreview(
@@ -300,7 +312,7 @@ fun MainContent() {
                 users,
             ) {
                 ctx.bluetoothAdapter.cancelDiscovery()
-                ctx.startActivity(Intent(ctx , ConnectionActivity::class.java).putExtra("mac" , viewModel.usersList[it].data))
+                ctx.startActivity(Intent(ctx , ConnectingActivity::class.java).putExtra("mac" , viewModel.usersList[it].data))
                 ctx.finish()
             }
         }

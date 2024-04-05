@@ -16,6 +16,10 @@ import kotlin.concurrent.thread
 class ConnectionHelper(sok: BluetoothSocket, bufferSize: Int = 1024, minReadSize: Int = 5, quantize: Boolean = true, receiver: (data: ByteArray , size: Int) -> Unit) {
     private val TAG = "ConnectionHelper"
 
+    // should the helper wait for the other device to send a ready signal ?
+    // if true, then what is the ready byte ?
+    private var _waitForReady = 0xff
+
     private var _connected = true
     val isConnected get() = _connected
 
@@ -33,20 +37,10 @@ class ConnectionHelper(sok: BluetoothSocket, bufferSize: Int = 1024, minReadSize
     private var _packets = LinkedList<Packet>()
     private var _sendQueue = LinkedList<Packet>()
 
-    private var _workerLock = Any()
     private var _QueueLock = Any()
     private fun worker(){ //worker thread
-        thread {
-            // Queue logic
-            while (_connected){
-                synchronized(_workerLock){
-                    synchronized(_QueueLock){
-                        _packets.addAll(_sendQueue)
-                        _sendQueue.clear()
-                    }
-                }
-            }
-        }
+        var ready = false
+
         thread {
             //sender logic
             try {
@@ -54,13 +48,28 @@ class ConnectionHelper(sok: BluetoothSocket, bufferSize: Int = 1024, minReadSize
                     ?: throw NullPointerException("Failed to obtain output stream")
 
                 while (_connected) {
-                    synchronized(_workerLock) {
-                        val packet = _packets.firstOrNull()
+                    synchronized(_QueueLock){
+                        _packets.addAll(_sendQueue)
+                        _sendQueue.clear()
+                    }
+
+                    if (_waitForReady == -1 || ready || !_quantize) {
+
+                        if (_waitForReady != -1 && _quantize) {
+                            output.write(_packets.size)
+                            output.flush()
+                        }
+
+                        var packet = _packets.removeFirstOrNull()
                         while (packet != null) {
                             output.write(packet.data)
                             output.flush()
+                            packet = _packets.removeFirstOrNull()
                         }
+
+                        ready = false
                     }
+
                 }
 
                 output.close()
@@ -75,36 +84,32 @@ class ConnectionHelper(sok: BluetoothSocket, bufferSize: Int = 1024, minReadSize
             //receiver logic
             try {
                 val buffer = ByteArray(_buffSize)
-                val quanta = ByteArray(_minReadSize)
-
                 val input: InputStream = _socket.inputStream
                     ?: throw NullPointerException("Failed to obtain output stream")
 
                 var offset = 0
-                var k: Int
                 while (_connected) {
-                    offset += input.read(buffer , offset , _buffSize - offset)
+                    offset += input.read(buffer , offset , if (_quantize) _minReadSize - offset else _buffSize - offset)
+
                     if (offset >= _minReadSize){
-                        if (_quantize){
-                            //send only bursts of data
-                            k = 0
-                            while (k <= offset - _minReadSize){
-                                for (i in 0..<_minReadSize){
-                                    quanta[i] = buffer[i + k]
+                        if (_quantize && _waitForReady != -1){
+                            var r = true
+                            for (i in 0..<_minReadSize){
+                                if (buffer[i] != _waitForReady.toByte()){
+                                    r = false
+                                    break
                                 }
-                                k += _minReadSize
-                                _recv(quanta, _minReadSize)
                             }
+                            if (r){
+                                Thread.sleep(150) //give the HC-05 10 ms to breath
+                                ready = true
+                                offset = 0
 
-                            for (i in 0..<offset-k){
-                                buffer[i] = buffer[k + i]
+                                continue
                             }
-
-                            offset -= k
-                        }else{
-                            _recv(buffer , offset)
-                            offset = 0
                         }
+                        _recv(buffer, _minReadSize)
+                        offset = 0
                     }
                 }
 
