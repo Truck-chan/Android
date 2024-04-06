@@ -4,6 +4,7 @@ import android.bluetooth.BluetoothSocket
 import android.util.Log
 import java.lang.IllegalStateException
 
+//it was a good attempt, but alas, I failed, Arduino is too slow for this
 interface MemoryListener{
     fun onDataChanged(index: Int) : Unit
     fun onDisconnected() : Unit
@@ -23,14 +24,11 @@ class SharedMemory(var socket: BluetoothSocket) {
             throw IllegalStateException("Socket must be connected.")
         }
 
-        _helper = ConnectionHelper(socket) {
+        _helper = ConnectionHelper(socket)
+        _helper.Reciever = {
                 data: ByteArray,
                 _: Int ->
             val pos = data[0].toInt() and 0xff
-            if (pos > 127) { //top 127 are reserved for now
-                Log.e(TAG, "OnPacket: received an index out of bounds")
-                return@ConnectionHelper
-            }
 
             _mData[pos][0] = data[1]
             _mData[pos][1] = data[2]

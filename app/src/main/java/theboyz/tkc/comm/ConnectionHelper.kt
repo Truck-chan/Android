@@ -13,12 +13,17 @@ import kotlin.concurrent.thread
 
 
 
-class ConnectionHelper(sok: BluetoothSocket, bufferSize: Int = 1024, minReadSize: Int = 5, quantize: Boolean = true, receiver: (data: ByteArray , size: Int) -> Unit) {
+class ConnectionHelper(
+    sok: BluetoothSocket,
+    bufferSize: Int = 1024,
+    minReadSize: Int = 5,
+    quantize: Boolean = true,
+) {
     private val TAG = "ConnectionHelper"
 
     // should the helper wait for the other device to send a ready signal ?
     // if true, then what is the ready byte ?
-    private var _waitForReady = 0xff
+    private var _waitForReady = -1
 
     private var _connected = true
     val isConnected get() = _connected
@@ -31,13 +36,16 @@ class ConnectionHelper(sok: BluetoothSocket, bufferSize: Int = 1024, minReadSize
     val minReadSize get() = _minReadSize
 
     private var _quantize = quantize
-    private var _recv = receiver
+
+    var Reciever: ((data: ByteArray, size: Int) -> Unit)? = null
+    var onDisconnect: (() -> Unit)? = null
 
     //worker variables
     private var _packets = LinkedList<Packet>()
     private var _sendQueue = LinkedList<Packet>()
 
     private var _QueueLock = Any()
+
     private fun worker(){ //worker thread
         var ready = false
 
@@ -48,7 +56,7 @@ class ConnectionHelper(sok: BluetoothSocket, bufferSize: Int = 1024, minReadSize
                     ?: throw NullPointerException("Failed to obtain output stream")
 
                 while (_connected) {
-                    synchronized(_QueueLock){
+                    synchronized(_QueueLock) {
                         _packets.addAll(_sendQueue)
                         _sendQueue.clear()
                     }
@@ -64,20 +72,24 @@ class ConnectionHelper(sok: BluetoothSocket, bufferSize: Int = 1024, minReadSize
                         while (packet != null) {
                             output.write(packet.data)
                             output.flush()
+                            Log.i(TAG, "worker: Data sent")
                             packet = _packets.removeFirstOrNull()
                         }
 
                         ready = false
                     }
-
                 }
-
                 output.close()
             } catch (e: Exception){
                 Log.e(TAG, "worker: (Output) Exited with error", e)
             }
 
             _connected = false
+            try {
+                onDisconnect?.let { it() }
+            } catch (_: Exception){
+
+            }
         }
 
         thread {
@@ -108,7 +120,10 @@ class ConnectionHelper(sok: BluetoothSocket, bufferSize: Int = 1024, minReadSize
                                 continue
                             }
                         }
-                        _recv(buffer, _minReadSize)
+
+                        if (Reciever != null)
+                            Reciever?.let { it(buffer, offset) }
+
                         offset = 0
                     }
                 }
@@ -124,6 +139,16 @@ class ConnectionHelper(sok: BluetoothSocket, bufferSize: Int = 1024, minReadSize
     fun send(p: Packet){
         synchronized(_QueueLock) {
             _sendQueue.add(p)
+        }
+    }
+
+    fun disconnect(){
+        thread {
+            try {
+                _socket.close()
+            } catch (e: Exception){
+                e.printStackTrace()
+            }
         }
     }
 

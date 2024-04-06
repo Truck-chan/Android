@@ -10,6 +10,7 @@ import android.util.Log
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
+import theboyz.tkc.comm.ConnectionHelper
 import theboyz.tkc.comm.SharedMemory
 import java.util.UUID
 import kotlin.concurrent.thread
@@ -39,12 +40,21 @@ class ConnectingActivity : AppCompatActivity() {
                     Log.e(TAG, "onCreate: Failed to connect (no permission)")
                     throw IllegalStateException("no permission")
                 }
-                val socket = dev.createRfcommSocketToServiceRecord(UUID.fromString(SERVICE_ID))
+                val socket = dev.createRfcommSocketToServiceRecord(UUID.fromString(Constants.SERVICE_ID))
 
                 socket.connect()
 
-                Constants.memory = SharedMemory(socket)
-                startActivity(Intent(this , ConnectionActivity::class.java))
+                Constants.Connection = ConnectionHelper(
+                    socket,
+                    minReadSize = 1,
+                    quantize = false
+                )
+
+                runOnUiThread {
+                    startActivity(Intent(this , ConnectionActivity::class.java))
+                    finish()
+                }
+
             }catch (e : Exception){
                 Log.e(TAG, "onCreate: Error while connecting", e)
                 runOnUiThread{

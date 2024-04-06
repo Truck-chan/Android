@@ -313,7 +313,6 @@ fun MainContent() {
             ) {
                 ctx.bluetoothAdapter.cancelDiscovery()
                 ctx.startActivity(Intent(ctx , ConnectingActivity::class.java).putExtra("mac" , viewModel.usersList[it].data))
-                ctx.finish()
             }
         }
     }
