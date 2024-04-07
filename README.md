@@ -2,7 +2,7 @@ Steps:
 
 1- download openCV (android version) : https://github.com/opencv/opencv/releases
 
-2- Extact anywhere
+2- Extract anywhere
 
 3- from the extracted files, copy the folder "sdk" into the app folder (next to "app", "gradle", .. folders)
 
