@@ -6,23 +6,58 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
+    <FrameLayout
+        android:id="@+id/open_panel_content"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_weight="1"
+        app:layout_constraintStart_toEndOf="@+id/side_buttons_linearlayout"
+        app:layout_constraintVertical_weight="1" >
+
+        <org.opencv.android.JavaCamera2View
+            android:id="@+id/camera_container"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"/>
+
+        <theboyz.tkc.ui.view.Overlay
+            android:id="@+id/overlay_view"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"/>
+
+    </FrameLayout>
+
     <LinearLayout
         android:id="@+id/side_buttons_linearlayout"
         android:layout_width="wrap_content"
         android:layout_height="match_parent"
-        android:gravity="center"
+        android:gravity="bottom"
         android:minWidth="20dp"
         android:background="#2C2C2C"
         android:orientation="vertical"
         app:layout_constraintStart_toStartOf="parent"
         tools:layout_editor_absoluteY="0dp">
 
-        <ImageButton
-            android:onClick="forceTerminate"
-            android:layout_width="50dp"
-            android:layout_height="50dp"
-            android:src="@drawable/baseline_stop_circle_24"
-            app:tint="#EF1616" />
+        <LinearLayout
+            android:orientation="vertical"
+            android:layout_weight="1"
+            android:layout_width="match_parent"
+            android:layout_height="0dp">
+
+            <ImageButton
+                android:id="@+id/btn_chat"
+                android:onClick="openChatView"
+                android:layout_width="50dp"
+                android:layout_height="50dp"
+                android:src="@drawable/baseline_chat_bubble_24" />
+
+            <ImageButton
+                android:id="@+id/btn_registers"
+                android:onClick="openRegistersView"
+                android:layout_width="50dp"
+                android:layout_height="50dp"
+                android:src="@drawable/baseline_data_object_24" />
+        </LinearLayout>
 
         <View
             android:layout_width="0dp"
@@ -37,75 +72,99 @@
             android:layout_height="15dp"/>
 
         <ImageButton
-            android:onClick="openRegistersView"
+            android:onClick="forceTerminate"
             android:layout_width="50dp"
             android:layout_height="50dp"
-            android:src="@drawable/baseline_data_object_24" />
-
-        <ImageButton
-            android:onClick="openRegistersView"
-            android:layout_width="50dp"
-            android:layout_height="50dp"
-            android:src="@drawable/baseline_data_object_24" />
+            android:src="@drawable/baseline_stop_circle_24"
+            app:tint="#EF1616" />
 
     </LinearLayout>
 
     <LinearLayout
-        android:layout_width="match_parent"
+
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:gravity="center"
         android:minHeight="20dp"
         android:orientation="horizontal"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent">
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="@+id/open_panel_content">
 
         <ImageButton
-            android:onClick="playAction"
+            android:id="@+id/btn_play"
             android:layout_width="50dp"
             android:layout_height="50dp"
+            android:onClick="playAction"
             android:src="@drawable/baseline_play_arrow_24" />
 
         <View
             android:layout_width="20dp"
-            android:layout_height="1dp"/>
+            android:layout_height="1dp" />
 
         <ImageButton
-            android:onClick="playAction"
             android:layout_width="50dp"
             android:layout_height="50dp"
+            android:onClick="bakeAction"
             android:src="@drawable/baseline_bakery_dining_24" />
 
     </LinearLayout>
 
+
     <FrameLayout
-        android:id="@+id/open_panel_content"
         android:layout_width="0dp"
         android:layout_height="match_parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_weight="1"
         app:layout_constraintStart_toEndOf="@+id/side_buttons_linearlayout"
-        app:layout_constraintVertical_weight="1" />
+        app:layout_constraintVertical_weight="1" >
 
+        <LinearLayout
+            android:visibility="invisible"
+            android:background="#101010"
+            android:orientation="vertical"
+            android:id="@+id/chat_container"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
 
-    <FrameLayout
-        android:id="@+id/overlay"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent">
+            <androidx.recyclerview.widget.RecyclerView
+                app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+                android:id="@+id/chat_content"
+                android:layout_weight="1"
+                android:layout_width="match_parent"
+                android:layout_height="0dp">
+
+            </androidx.recyclerview.widget.RecyclerView>
+
+            <com.google.android.material.divider.MaterialDivider
+                android:layout_width="match_parent"
+                android:layout_height="1dp"/>
+
+            <LinearLayout
+                android:orientation="horizontal"
+                android:layout_width="match_parent"
+                android:layout_height="50dp">
+
+                <EditText
+                    android:hint="Input Command"
+                    android:id="@+id/chat_input_area"
+                    android:layout_weight="1"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"/>
+
+                <ImageButton
+                    android:onClick="sendChatAction"
+                    android:src="@drawable/baseline_send_24"
+                    android:layout_width="50dp"
+                    android:layout_height="50dp"
+                    android:contentDescription="Send Message" />
+
+            </LinearLayout>
+
+        </LinearLayout>
+
     </FrameLayout>
 
-    <TextView
-        android:id="@+id/testing_tv"
-        android:text="pls work .."
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        tools:ignore="MissingConstraints" />
 
-    <TextView
-        android:id="@+id/testing_tv2"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="pls work .."
-        app:layout_constraintBottom_toBottomOf="@+id/side_buttons_linearlayout"
-        tools:ignore="MissingConstraints" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

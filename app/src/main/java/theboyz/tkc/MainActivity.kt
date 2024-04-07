@@ -59,6 +59,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.app.ActivityCompat
+import org.opencv.android.OpenCVLoader
 import theboyz.tkc.ui.component.UsersPreview
 import theboyz.tkc.ui.theme.TruckKunTheme
 
@@ -72,14 +73,15 @@ class MainActivity : ComponentActivity() {
     @RequiresApi(Build.VERSION_CODES.S)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         val uiManager = getSystemService(UI_MODE_SERVICE) as UiModeManager
         uiManager.setApplicationNightMode(UiModeManager.MODE_NIGHT_YES)
+        actionBar?.hide()
 
-        actionBar?.hide();
+        OpenCVLoader.initLocal()
 
         val bluetoothManager: BluetoothManager = getSystemService(BluetoothManager::class.java)
         bluetoothAdapter = bluetoothManager.adapter
-
         val filter = IntentFilter(BluetoothDevice.ACTION_FOUND)
         filter.addAction(BluetoothAdapter.ACTION_DISCOVERY_STARTED)
         filter.addAction(BluetoothAdapter.ACTION_DISCOVERY_FINISHED)
@@ -101,13 +103,30 @@ class MainActivity : ComponentActivity() {
             viewModel.state = MainViewModel.STATE_OFF
         }
 
+        requestPermissions()
+
         setContent {
             MainLayout()
         }
     }
 
-    private val receiver = object : BroadcastReceiver() {
+    override fun onActivityReenter(resultCode: Int, data: Intent?) {
+        super.onActivityReenter(resultCode, data)
+        if (resultCode == 1001){
+            requestPermissions()
+        }
+    }
 
+    private fun requestPermissions(){
+        if (ActivityCompat.checkSelfPermission(this , Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED){
+                requestPermissions(
+                    arrayOf( Manifest.permission.CAMERA),
+                    1001
+                )
+        }
+    }
+
+    private val receiver = object : BroadcastReceiver() {
         @SuppressLint("MissingPermission")
         override fun onReceive(context: Context, intent: Intent) {
             val action: String? = intent.action
@@ -271,11 +290,6 @@ fun MainContent() {
                 }
             }
 
-//            Button(onClick = {
-//                ctx.viewModel.addUser("Abdo" , "is ded")
-//            }) {
-//                Text(text = "test")
-//            }
         }
         Divider(thickness = Dp(1f), modifier = Modifier
             .fillMaxHeight()  //fill the max height
