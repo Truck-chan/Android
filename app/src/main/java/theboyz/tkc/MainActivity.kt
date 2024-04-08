@@ -239,7 +239,7 @@ fun MainContent() {
                                         if (ActivityCompat.checkSelfPermission(
                                                 ctx,
                                                 Manifest.permission.BLUETOOTH_SCAN
-                                            ) != PackageManager.PERMISSION_GRANTED && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
+                                            ) != PackageManager.PERMISSION_GRANTED
                                         ) {
                                             Toast.makeText(
                                                 ctx,
@@ -247,11 +247,13 @@ fun MainContent() {
                                                 Toast.LENGTH_SHORT
                                             ).show()
 
-                                            ActivityCompat.requestPermissions(
-                                                ctx,
-                                                arrayOf(Manifest.permission.BLUETOOTH_SCAN),
-                                                10,
-                                            )
+                                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                                                ActivityCompat.requestPermissions(
+                                                    ctx,
+                                                    arrayOf(Manifest.permission.BLUETOOTH_SCAN),
+                                                    10,
+                                                )
+                                            }
 
                                         } else {
                                             Log.i(TAG, "MainContent: Starting Discovery")
