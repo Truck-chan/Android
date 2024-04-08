@@ -124,6 +124,13 @@ class MainActivity : ComponentActivity() {
                     1001
                 )
         }
+
+        if (ActivityCompat.checkSelfPermission(this , Manifest.permission.BLUETOOTH) != PackageManager.PERMISSION_GRANTED){
+            requestPermissions(
+                arrayOf( Manifest.permission.BLUETOOTH),
+                1001
+            )
+        }
     }
 
     private val receiver = object : BroadcastReceiver() {
@@ -142,7 +149,7 @@ class MainActivity : ComponentActivity() {
                     }
                     val deviceName = device.name
                     val deviceHardwareAddress = device.address // MAC address
-                    Log.i(TAG, "onReceive: Deivce : ${deviceName} & mac = ${deviceHardwareAddress}")
+                    Log.i(TAG, "onReceive: Device : ${deviceName} & mac = ${deviceHardwareAddress}")
                     viewModel.addUser(deviceName ?: "not-named", deviceHardwareAddress)
                 }
 
