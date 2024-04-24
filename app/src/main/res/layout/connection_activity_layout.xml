@@ -31,135 +31,329 @@
         android:id="@+id/side_buttons_linearlayout"
         android:layout_width="wrap_content"
         android:layout_height="match_parent"
+        android:background="#2C2C2C"
         android:gravity="bottom"
         android:minWidth="20dp"
-        android:background="#2C2C2C"
         android:orientation="vertical"
         app:layout_constraintStart_toStartOf="parent"
         tools:layout_editor_absoluteY="0dp">
 
         <LinearLayout
-            android:orientation="vertical"
-            android:layout_weight="1"
             android:layout_width="match_parent"
-            android:layout_height="0dp">
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:orientation="vertical">
 
             <ImageButton
                 android:id="@+id/btn_chat"
-                android:onClick="openChatView"
                 android:layout_width="50dp"
                 android:layout_height="50dp"
+                android:onClick="openChatView"
                 android:src="@drawable/baseline_chat_bubble_24" />
 
             <ImageButton
                 android:id="@+id/btn_registers"
-                android:onClick="openRegistersView"
                 android:layout_width="50dp"
                 android:layout_height="50dp"
+                android:onClick="openRegistersView"
                 android:src="@drawable/baseline_data_object_24" />
         </LinearLayout>
 
         <View
             android:layout_width="0dp"
-            android:layout_height="15dp"/>
+            android:layout_height="15dp" />
 
         <com.google.android.material.divider.MaterialDivider
             android:layout_width="match_parent"
-            android:layout_height="1dp"/>
+            android:layout_height="1dp" />
 
         <View
             android:layout_width="0dp"
-            android:layout_height="15dp"/>
+            android:layout_height="15dp" />
+
+        <LinearLayout
+            android:gravity="center"
+            android:orientation="vertical"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <Button
+                android:padding="0dp"
+                android:text="+"
+                android:layout_width="30dp"
+                android:layout_height="30dp"
+                android:onClick="preivewInc"
+                app:tint="#EF1616" />
+
+            <TextView
+                android:id="@+id/currentPreview"
+                android:gravity="center"
+                android:text="1"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"/>
+
+            <Button
+                android:padding="0dp"
+                android:text="-"
+                android:layout_width="30dp"
+                android:layout_height="30dp"
+                android:onClick="preivewDec"
+                app:tint="#EF1616" />
+        </LinearLayout>
 
         <ImageButton
-            android:onClick="forceTerminate"
+            android:id="@+id/btn_preview"
             android:layout_width="50dp"
             android:layout_height="50dp"
+            android:onClick="previewAction"
+            android:src="@drawable/baseline_remove_red_eye_24"
+            tools:layout_editor_absoluteY="243dp" />
+
+        <View
+            android:layout_width="0dp"
+            android:layout_height="15dp" />
+
+        <com.google.android.material.divider.MaterialDivider
+            android:layout_width="match_parent"
+            android:layout_height="1dp" />
+
+        <View
+            android:layout_width="0dp"
+            android:layout_height="15dp" />
+
+        <ImageButton
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:onClick="forceTerminate"
             android:src="@drawable/baseline_stop_circle_24"
             app:tint="#EF1616" />
 
     </LinearLayout>
 
-    <LinearLayout
 
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:gravity="center"
-        android:minHeight="20dp"
-        android:orientation="horizontal"
+
+    <LinearLayout
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="@+id/open_panel_content">
+        app:layout_constraintStart_toStartOf="@+id/open_panel_content"
+        android:orientation="horizontal"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content">
 
-        <ImageButton
-            android:id="@+id/btn_play"
-            android:layout_width="50dp"
-            android:layout_height="50dp"
-            android:onClick="playAction"
-            android:src="@drawable/baseline_play_arrow_24" />
+        <LinearLayout
+            android:layout_weight="@integer/material_motion_duration_long_1"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:minHeight="20dp"
+            android:orientation="horizontal">
 
-        <View
-            android:layout_width="20dp"
-            android:layout_height="1dp" />
+            <ImageButton
+                android:id="@+id/btn_play"
+                android:layout_width="50dp"
+                android:layout_height="50dp"
+                android:onClick="playAction"
+                android:src="@drawable/baseline_play_arrow_24" />
 
-        <ImageButton
-            android:layout_width="50dp"
-            android:layout_height="50dp"
-            android:onClick="bakeAction"
-            android:src="@drawable/baseline_bakery_dining_24" />
+            <View
+                android:layout_width="20dp"
+                android:layout_height="1dp" />
+
+            <ImageButton
+                android:layout_width="50dp"
+                android:layout_height="50dp"
+                android:onClick="bakeAction"
+                android:src="@drawable/baseline_bakery_dining_24" />
+
+        </LinearLayout>
 
     </LinearLayout>
 
 
+
     <FrameLayout
+        android:id="@+id/frameLayout"
         android:layout_width="0dp"
         android:layout_height="match_parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_weight="1"
         app:layout_constraintStart_toEndOf="@+id/side_buttons_linearlayout"
-        app:layout_constraintVertical_weight="1" >
+        app:layout_constraintVertical_weight="1">
 
         <LinearLayout
-            android:visibility="invisible"
-            android:background="#101010"
-            android:orientation="vertical"
             android:id="@+id/chat_container"
             android:layout_width="match_parent"
-            android:layout_height="match_parent">
+            android:layout_height="match_parent"
+            android:background="#101010"
+            android:orientation="vertical"
+            android:visibility="invisible">
 
             <androidx.recyclerview.widget.RecyclerView
-                app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
                 android:id="@+id/chat_content"
-                android:layout_weight="1"
                 android:layout_width="match_parent"
-                android:layout_height="0dp">
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager">
 
             </androidx.recyclerview.widget.RecyclerView>
 
             <com.google.android.material.divider.MaterialDivider
                 android:layout_width="match_parent"
-                android:layout_height="1dp"/>
+                android:layout_height="1dp" />
 
             <LinearLayout
-                android:orientation="horizontal"
                 android:layout_width="match_parent"
-                android:layout_height="50dp">
+                android:layout_height="50dp"
+                android:orientation="horizontal">
 
                 <EditText
-                    android:hint="Input Command"
                     android:id="@+id/chat_input_area"
-                    android:layout_weight="1"
                     android:layout_width="0dp"
-                    android:layout_height="match_parent"/>
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:hint="Input Command" />
 
                 <ImageButton
-                    android:onClick="sendChatAction"
-                    android:src="@drawable/baseline_send_24"
                     android:layout_width="50dp"
                     android:layout_height="50dp"
-                    android:contentDescription="Send Message" />
+                    android:contentDescription="Send Message"
+                    android:onClick="sendChatAction"
+                    android:src="@drawable/baseline_send_24" />
 
             </LinearLayout>
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/variables_container"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="horizontal"
+            android:visibility="invisible">
+
+            <ScrollView
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:background="#101010">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:orientation="horizontal"
+                        android:padding="12dp">
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="4.5"
+                            android:text="GAMMA_VALUE" />
+
+                        <View
+                            android:layout_width="10dp"
+                            android:layout_height="1dp" />
+
+                        <SeekBar
+                            android:id="@+id/variable_GAMMA_VALUE"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="5"
+                            android:max="200"
+                            android:min="0" />
+
+                        <TextView
+                            android:id="@+id/variable_GAMMA_VALUE_value"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="2"
+                            android:text="  " />
+
+                    </LinearLayout>
+
+                    <com.google.android.material.divider.MaterialDivider
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:paddingLeft="12dp"
+                        android:paddingRight="12dp" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:orientation="horizontal"
+                        android:padding="12dp">
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="4.5"
+                            android:text="MIN_AREA_PERCENTAGE" />
+
+                        <View
+                            android:layout_width="10dp"
+                            android:layout_height="1dp" />
+
+                        <SeekBar
+                            android:id="@+id/variable_MIN_AREA_PERCENTAGE"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="5"
+                            android:max="200"
+                            android:min="0" />
+
+                        <TextView
+                            android:id="@+id/variable_MIN_AREA_PERCENTAGE_value"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="2"
+                            android:text="  " />
+
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:orientation="horizontal"
+                        android:padding="12dp">
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="4.5"
+                            android:text="MAX_AREA_PERCENTAGE" />
+
+                        <View
+                            android:layout_width="10dp"
+                            android:layout_height="1dp" />
+
+                        <SeekBar
+                            android:id="@+id/variable_MAX_AREA_PERCENTAGE"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="5"
+                            android:max="100"
+                            android:min="70" />
+
+                        <TextView
+                            android:id="@+id/variable_MAX_AREA_PERCENTAGE_value"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="2"
+                            android:text="  " />
+
+                    </LinearLayout>
+
+                </LinearLayout>
+            </ScrollView>
+
+            <View
+                android:layout_width="0dp"
+                android:layout_height="1dp"
+                android:layout_weight="1" />
 
         </LinearLayout>
 

@@ -77,6 +77,22 @@ class EventLog {
 
         fun log(text: String, color: Int){
 
+
+            if (!Looper.getMainLooper().isCurrentThread) { //not on the UI thread
+                viewObject?.post { //run it on the UI thread
+                    LogItems.add(
+                        EventObject(
+                            text,
+                            LocalDateTime.now(),
+                            color
+                        )
+                    )
+                    viewObject?.adapter?.notifyItemInserted(LogItems.size - 1)
+                    Log.i(TAG, "log: $text")
+                }
+                return
+            }
+
             LogItems.add(
                 EventObject(
                     text,
@@ -84,15 +100,6 @@ class EventLog {
                     color
                 )
             )
-
-            if (!Looper.getMainLooper().isCurrentThread) { //not on the UI thread
-                viewObject?.post { //run it on the UI thread
-                    viewObject?.adapter?.notifyItemInserted(LogItems.size - 1)
-                    Log.i(TAG, "log: $text")
-                }
-                return
-            }
-
             viewObject?.adapter?.notifyItemInserted(LogItems.size - 1)
             Log.i(TAG, "log: $text")
         }

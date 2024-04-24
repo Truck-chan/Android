@@ -9,6 +9,9 @@ import android.widget.EditText
 import android.widget.ImageButton
 import android.widget.LinearLayout
 import android.widget.ScrollView
+import android.widget.SeekBar
+import android.widget.SeekBar.OnSeekBarChangeListener
+import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.RecyclerView
@@ -16,6 +19,7 @@ import org.opencv.android.CameraBridgeViewBase
 import org.opencv.android.JavaCamera2View
 import org.opencv.core.Mat
 import theboyz.tkc.comm.packet
+import theboyz.tkc.ip.GlobalParameters
 import theboyz.tkc.ui.view.Overlay
 import uni.proj.ec.Command
 import uni.proj.ec.command
@@ -28,18 +32,25 @@ class ConnectionActivity : AppCompatActivity(){
     private lateinit var btnPlay: ImageButton
     private lateinit var btnChat: ImageButton
     private lateinit var btnReg : ImageButton
+    private lateinit var btnPreview : ImageButton
 
     private lateinit var cameraContainer: JavaCamera2View
     private lateinit var overlayView: Overlay
     private lateinit var chatContainer: LinearLayout
     private lateinit var chatContent: RecyclerView
+    private lateinit var variablesContainer: LinearLayout
     private lateinit var chatInputArea: EditText
+    private lateinit var currentPreview: TextView
 
     private var currentOpenMenu: Int = 0 //0 = none , 1 = chat , 2 = reg
     private var gameRunning: Boolean = false
     private var imageBacked: Boolean = false
 
+    private var currentPreviewIndex: Int = 0
+    private var previewRunning: Boolean = false
+
     private var CurrentFrame: Mat = Mat()
+    private val FrameLock: Any = Object()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -61,12 +72,69 @@ class ConnectionActivity : AppCompatActivity(){
         btnPlay = findViewById(R.id.btn_play)
         btnChat = findViewById(R.id.btn_chat)
         btnReg  = findViewById(R.id.btn_registers)
+        btnPreview  = findViewById(R.id.btn_preview)
 
         cameraContainer = findViewById(R.id.camera_container)
         overlayView = findViewById(R.id.overlay_view)
         chatContainer = findViewById(R.id.chat_container)
         chatContent = findViewById(R.id.chat_content)
         chatInputArea = findViewById(R.id.chat_input_area)
+        currentPreview = findViewById(R.id.currentPreview)
+        variablesContainer = findViewById(R.id.variables_container)
+
+        var b1: SeekBar = findViewById(R.id.variable_GAMMA_VALUE)
+        b1.setOnSeekBarChangeListener(
+            object: OnSeekBarChangeListener {
+                override fun onProgressChanged(
+                    seekBar: SeekBar?,
+                    progress: Int,
+                    fromUser: Boolean
+                ) {
+                    GlobalParameters.GAMMA_VALUE = progress.toDouble() / 100.0f
+                    var text: TextView = findViewById(R.id.variable_GAMMA_VALUE_value)
+                    text.text = GlobalParameters.GAMMA_VALUE.toString()
+                }
+
+                override fun onStartTrackingTouch(seekBar: SeekBar?) {}
+                override fun onStopTrackingTouch(seekBar: SeekBar?) {}
+            }
+        )
+
+        var b2: SeekBar = findViewById(R.id.variable_MIN_AREA_PERCENTAGE)
+        b2.setOnSeekBarChangeListener(
+            object: OnSeekBarChangeListener {
+                override fun onProgressChanged(
+                    seekBar: SeekBar?,
+                    progress: Int,
+                    fromUser: Boolean
+                ) {
+                    GlobalParameters.MIN_AREA_PERCENTAGE = progress.toDouble() / 1000.0f
+                    var text: TextView = findViewById(R.id.variable_MIN_AREA_PERCENTAGE_value)
+                    text.text = GlobalParameters.MIN_AREA_PERCENTAGE.toString()
+                }
+
+                override fun onStartTrackingTouch(seekBar: SeekBar?) {}
+                override fun onStopTrackingTouch(seekBar: SeekBar?) {}
+            }
+        )
+
+        var b3: SeekBar = findViewById(R.id.variable_MAX_AREA_PERCENTAGE)
+        b3.setOnSeekBarChangeListener(
+            object: OnSeekBarChangeListener {
+                override fun onProgressChanged(
+                    seekBar: SeekBar?,
+                    progress: Int,
+                    fromUser: Boolean
+                ) {
+                    GlobalParameters.MAX_AREA_PERCENTAGE = progress.toDouble() / 100.0f
+                    var text: TextView = findViewById(R.id.variable_MAX_AREA_PERCENTAGE_value)
+                    text.text = GlobalParameters.MAX_AREA_PERCENTAGE.toString()
+                }
+
+                override fun onStartTrackingTouch(seekBar: SeekBar?) {}
+                override fun onStopTrackingTouch(seekBar: SeekBar?) {}
+            }
+        )
 
         cameraContainer.setCvCameraViewListener(
             object: CameraBridgeViewBase.CvCameraViewListener2 {
@@ -74,11 +142,24 @@ class ConnectionActivity : AppCompatActivity(){
 
                 override fun onCameraFrame(inputFrame: CameraBridgeViewBase.CvCameraViewFrame?): Mat {
                     if (inputFrame != null) {
-                        CurrentFrame = inputFrame.rgba()
-                        CurrentFrame.copyTo(temp)
-                        temp = ImageProcessing.OnFrame(temp)
+
+                        synchronized(FrameLock) {
+                            CurrentFrame = inputFrame.rgba()
+                            CurrentFrame.copyTo(temp)
+                        }
+
+                        var img: Mat = Mat();
+                        temp.copyTo(img)
+                        ImageProcessing.OnFrame(img)
+                        img.copyTo(temp)
                         if (gameRunning){
-                            temp = ImageProcessing.OnGameFrame(temp)
+                            temp.copyTo(img)
+                            ImageProcessing.OnGameFrame(img)
+                            img.copyTo(temp)
+                        } else if (previewRunning){
+                            temp.copyTo(img)
+                            ImageProcessing.OnPreview(currentPreviewIndex, img)
+                            img.copyTo(temp)
                         }
                         return temp
                     }
@@ -111,6 +192,12 @@ class ConnectionActivity : AppCompatActivity(){
             btnPlay.setImageResource(R.drawable.baseline_play_arrow_24)
         }
 
+        if (previewRunning){
+            btnPreview.setColorFilter(Color.argb(255 , 255 , 255 , 255))
+        }else{
+            btnPreview.setColorFilter(Color.argb(255 , 10 , 10 , 10))
+        }
+
         btnChat.setColorFilter(Color.argb(255 , 0 , 0 , 0))
         btnReg.setColorFilter(Color.argb(255 , 0 , 0 , 0))
 
@@ -139,7 +226,20 @@ class ConnectionActivity : AppCompatActivity(){
     }
 
     fun openRegistersView(view: View) {
-        Toast.makeText(this, "Will be added if needed.", Toast.LENGTH_SHORT).show()
+
+        when(currentOpenMenu){
+            2 -> {
+                variablesContainer.visibility = View.INVISIBLE
+                currentOpenMenu = 0
+            }
+
+            else -> {
+                chatContainer.visibility = View.INVISIBLE
+                variablesContainer.visibility = View.VISIBLE
+                currentOpenMenu = 2
+            }
+        }
+
         updateButtonsStats()
     }
 
@@ -152,6 +252,7 @@ class ConnectionActivity : AppCompatActivity(){
 
             else -> {
                 chatContainer.visibility = View.VISIBLE
+                variablesContainer.visibility = View.INVISIBLE
                 currentOpenMenu = 1
             }
         }
@@ -159,14 +260,23 @@ class ConnectionActivity : AppCompatActivity(){
     }
 
     fun bakeAction(view: View) {
-        var dialog = AlertDialog.Builder(this).create()
+        if (gameRunning){
+            Toast.makeText(this, "Stop the game first", Toast.LENGTH_SHORT);
+            return;
+        }
+
+        val dialog = AlertDialog.Builder(this).create()
         dialog.setView(LayoutInflater.from(this).inflate(R.layout.bake_loading_dialog, null))
         dialog.setCancelable(false)
         dialog.show()
         EventLog.w("Bake Process Started ..")
-        thread {
-            val temp = Mat()
+
+        val temp = Mat()
+        synchronized(FrameLock) {
             CurrentFrame.copyTo(temp)
+        }
+
+        thread {
             imageBacked = try {
                 ImageProcessing.onBakeTrackImage(temp)
                 true
@@ -175,13 +285,27 @@ class ConnectionActivity : AppCompatActivity(){
                 false
             }
 
+            EventLog.w("Bake Process Finished")
+
             runOnUiThread {
                 dialog.cancel()
-                EventLog.w("Bake Process Finished")
+
             }
         }
     }
     fun playAction(view: View) {
+        if (gameRunning){
+            gameRunning = false
+            updateButtonsStats()
+            return
+        }
+
+        if (previewRunning){
+            previewRunning = false
+            updateButtonsStats()
+            //stop the preview if its running
+        }
+
         if (!imageBacked){
             Toast.makeText(this , "Bake the track first" , Toast.LENGTH_SHORT).show()
             return
@@ -215,6 +339,24 @@ class ConnectionActivity : AppCompatActivity(){
 
     fun connectionExit(view: View) {
         finish()
+    }
+
+    fun preivewInc(view: View) {
+        currentPreviewIndex++
+        currentPreview.text = currentPreviewIndex.toString();
+    }
+    fun preivewDec(view: View) {
+        currentPreviewIndex--
+        currentPreview.text = currentPreviewIndex.toString();
+    }
+    fun previewAction(view: View) {
+        if (gameRunning){
+            Toast.makeText(this, "Please stop the game first" , Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        previewRunning = !previewRunning
+        updateButtonsStats()
     }
 
 

@@ -62,9 +62,11 @@ import androidx.core.app.ActivityCompat
 import org.opencv.android.OpenCVLoader
 import theboyz.tkc.ui.component.UsersPreview
 import theboyz.tkc.ui.theme.TruckKunTheme
+import theboyz.tkc.Constants.START_CAMERA
 
 
 private const val TAG = "MainActivity";
+
 
 class MainActivity : ComponentActivity() {
     val viewModel by viewModels<MainViewModel>()
@@ -103,6 +105,7 @@ class MainActivity : ComponentActivity() {
             viewModel.state = MainViewModel.STATE_OFF
         }
 
+
         requestPermissions()
 
         setContent {
@@ -118,18 +121,45 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun requestPermissions(){
+        var r = 0;
         if (ActivityCompat.checkSelfPermission(this , Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED){
                 requestPermissions(
                     arrayOf( Manifest.permission.CAMERA),
                     1001
                 )
-        }
+        } else r++
 
         if (ActivityCompat.checkSelfPermission(this , Manifest.permission.BLUETOOTH) != PackageManager.PERMISSION_GRANTED){
             requestPermissions(
                 arrayOf( Manifest.permission.BLUETOOTH),
                 1001
             )
+        } else r++
+
+        if (ActivityCompat.checkSelfPermission(this , Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED){
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                requestPermissions(
+                    arrayOf( Manifest.permission.BLUETOOTH_CONNECT),
+                    1001
+                )
+            }else {
+                Toast.makeText(this, "needs to have bt connect", Toast.LENGTH_SHORT).show()
+            }
+        } else r++
+
+        if (ActivityCompat.checkSelfPermission(this , Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED){
+            requestPermissions(
+                arrayOf( Manifest.permission.ACCESS_COARSE_LOCATION),
+                1001
+            )
+        } else r++
+
+        if (r == 4){
+            if (START_CAMERA) {
+                this.startActivity(
+                    Intent(this, ConnectionActivity::class.java)
+                )
+            }
         }
     }
 
@@ -150,7 +180,9 @@ class MainActivity : ComponentActivity() {
                     val deviceName = device.name
                     val deviceHardwareAddress = device.address // MAC address
                     Log.i(TAG, "onReceive: Device : ${deviceName} & mac = ${deviceHardwareAddress}")
-                    viewModel.addUser(deviceName ?: "not-named", deviceHardwareAddress)
+                    if (deviceName != null) {
+                        viewModel.addUser(deviceName ?: "not-named", deviceHardwareAddress)
+                    }
                 }
 
                 BluetoothAdapter.ACTION_DISCOVERY_STARTED -> {

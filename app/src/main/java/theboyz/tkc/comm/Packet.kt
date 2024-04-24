@@ -46,7 +46,12 @@ val Command.packet: Packet
             if (arg.name == null || arg.value == null){
                 return Packet(byteArrayOf())
             }
+
             bytes.add(arg.name.length.toByte())
+            for (c in arg.name){
+                bytes.add(c.code.toByte())
+            }
+
             when (arg.value) {
                 is Float -> {
                     val bits = arg.value.toBits()

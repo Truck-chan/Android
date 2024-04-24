@@ -6,32 +6,50 @@ import org.opencv.core.Scalar;
 import org.opencv.imgproc.Imgproc;
 
 import kotlin.NotImplementedError;
+import theboyz.tkc.ip.AdjustGamma;
+import theboyz.tkc.ip.ApplyOtsuThreshold;
+import theboyz.tkc.ip.ConvertToGray;
+import theboyz.tkc.ip.PadImage;
+import theboyz.tkc.ip.Sharingan;
+import uni.proj.ec.Command;
 
 public class ImageProcessing {
+
+    public static void send(String command){
+        //Communicator.Companion.send(command);
+    }
+
+    public static void send(Command command){
+       // Communicator.Companion.send(command);
+    }
 
     /**
      * will be called only once after the connection with arduino has been established
      * this will run on the UI thread, so you better not make it performance intensive
      * */
-    public static void init(){
 
+    private static Sharingan sharingan;
+    public static void init(){
+        sharingan = new Sharingan();
+        sharingan.addPreprocessorComponent(new ConvertToGray());
+        sharingan.addPreprocessorComponent(new AdjustGamma());
+        sharingan.addPreprocessorComponent(new ApplyOtsuThreshold());
+
+        //fixme: Padding doesn't work for now ..
+        //sharingan.addPreprocessorComponent(new PadImage());
     }
 
     /**
      * this will be called only once after the camera has been obtained
      * this will run on the UI thread, so you better not make it performance intensive
      * */
-    public static void onCameraSize(int width, int height){
-
-    }
+    public static void onCameraSize(int width, int height){}
 
     /**
      * read the name :)
      * this will run on the UI thread, so you better not make it performance intensive
      * */
-    public static void onGameStarted(){
-
-    }
+    public static void onGameStarted(){}
 
     /**
      * this will be called every frame even if the game is not running
@@ -44,14 +62,16 @@ public class ImageProcessing {
      * */
 
     static float x = 40;
-    public static Mat OnFrame(Mat frame){
+    public static void OnFrame(Mat frame){}
+
+
+    public static void OnPreview(int id, Mat frame){
         x += 3;
         if (x > 400){
             x = 40;
         }
 
         Imgproc.circle(frame, new Point(x , 150) , 40 , new Scalar(1,1,1,1) , 15);
-        return frame;
     }
 
     /**
@@ -59,8 +79,13 @@ public class ImageProcessing {
      *
      * this will run on the UI thread, so you better not make it performance intensive
      * */
-    public static Mat OnGameFrame(Mat frame){
-        throw new NotImplementedError("TODO");
+    public static void OnGameFrame(Mat frame){
+        //sharingan.loadImage(frame);
+        //sharingan.startPreprocessing();
+//        sharingan.loadImage(frame);
+//        sharingan.startPreprocessing();
+//        sharingan.analyseMap();
+        sharingan.mapImage.copyTo(frame);
     }
 
 
@@ -71,6 +96,10 @@ public class ImageProcessing {
      * this will run on its own thread, so it has no problem being performance intensive
      * */
     public static void onBakeTrackImage(Mat frame){
-
+        send("let_me_cook{}");
+        sharingan.loadImage(frame);
+        sharingan.startPreprocessing();
+        sharingan.analyseMap();
+        //sharingan.connectContours();
     }
 }
