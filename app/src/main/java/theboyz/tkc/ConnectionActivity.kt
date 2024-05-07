@@ -151,8 +151,12 @@ class ConnectionActivity : AppCompatActivity(){
                         var img: Mat = Mat();
                         temp.copyTo(img)
                         ImageProcessing.OnFrame(img)
+                        synchronized(FrameLock) {
+                            img.copyTo(CurrentFrame);
+                        }
                         img.copyTo(temp)
                         if (gameRunning){
+                            //FIXME: some redundant copying is happening here
                             temp.copyTo(img)
                             ImageProcessing.OnGameFrame(img)
                             img.copyTo(temp)

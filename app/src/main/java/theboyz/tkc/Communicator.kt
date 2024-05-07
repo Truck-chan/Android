@@ -7,11 +7,15 @@ import uni.proj.ec.command
 class Communicator {
     companion object {
         fun send(cmd: String) : Unit {
-            Constants.Connection.send(cmd.command.packet)
+            if (Constants.Connection != null) {
+                Constants.Connection.send(cmd.command.packet)
+            }
         }
 
         fun send(cmd: Command) : Unit {
-            Constants.Connection.send(cmd.packet)
+            if (Constants.Connection != null) {
+                Constants.Connection.send(cmd.packet)
+            }
         }
     }
 }
