@@ -107,7 +107,6 @@ class MainActivity : ComponentActivity() {
         }
 
 
-        requestPermissions()
 
         setContent {
             MainLayout()
@@ -162,6 +161,11 @@ class MainActivity : ComponentActivity() {
                 )
             }
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        requestPermissions()
     }
 
     private val receiver = object : BroadcastReceiver() {
