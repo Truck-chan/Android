@@ -7,6 +7,7 @@ import org.opencv.core.Point;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 public class GraphConnector {
 
@@ -149,32 +150,54 @@ public class GraphConnector {
     }
 
 
-//    ArrayList<Point> lapLine = new ArrayList<>();
-//    Map<Point, Boolean> visited = new HashMap<>();
-//    public void makeLapLine(Map<PointContour, PointContour> connections, Point current, int contour = 0)
-//    {
-//        if (visited.containsKey(current))
-//            return;
-//        visited.put(current , true);
-//
-//        if (!connections.containsKey(current))  // if the point is in the connection points
-//        {
-//            lapLine.add(current);
-//            makeLapLine();
-//        }
-//        else
-//        {
-//
-//        }
-//
-//    }
+
+    ArrayList<Point> lapLine = new ArrayList<>();
+    public void makeLapLine(Map<PointContour, PointContour> connections)
+    {
+        int currentContour = 0;
+        int currentIdx = 1;
+
+        Point initPoint = graphs.get(currentContour).get(currentIdx);
+        Point nextPoint = initPoint;
+        Point currentPoint = nextPoint;
+        boolean flag = false;
+        int direction = 1;
+        do {
+            currentPoint = nextPoint;
+            if (connections.containsKey(new PointContour(currentPoint, currentContour)) && !flag)
+            {
+                PointContour pc = connections.get(new PointContour(currentPoint, currentContour));
+                nextPoint = pc.point;
+                currentContour = pc.contourNumber;
+                currentIdx = graphs.get(currentContour).indexOf(nextPoint);
+                direction *= -1;
+                flag = true;
+            }
+            else
+            {
+                int n = graphs.get(currentContour).size();
+                currentIdx = (currentIdx % n + direction + n) % n;
+                nextPoint = graphs.get(currentContour).get(currentIdx);
+                flag = false;
+            }
+            Log.i(TAG, "makeLapLine: Next Point = " + nextPoint);
+            lapLine.add(currentPoint);
+        } while (nextPoint != initPoint);
+    }
     
-    public ArrayList<Connection> connectContours()
+    public void connectContours()
     {
         Map<PointContour, PointContour> connections = connectSeparatedContours();
 
-        return new ArrayList<>();
-//        makeLapLine(connections);
+        try {
+            makeLapLine(connections);
+        }
+        catch (Exception e)
+        {
+            Log.i(TAG, "connectContours: Exception " + e.getMessage());
+        }
+
+        Log.i(TAG, "connectContours: Connected Track = " + lapLine.toString());
     }
 }
 
@@ -185,6 +208,20 @@ class PointContour
     PointContour(Point p, int c) {
         point = p;
         contourNumber = c;
+    }
+
+    // Override equals() and hashCode() methods
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        PointContour customKey = (PointContour) o;
+        return point.x == customKey.point.x && point.y == customKey.point.y && contourNumber == customKey.contourNumber;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(point.x, point.y, contourNumber);
     }
 }
 

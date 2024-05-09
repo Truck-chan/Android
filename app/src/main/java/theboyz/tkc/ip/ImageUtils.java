@@ -100,7 +100,7 @@ public class ImageUtils {
     {
         for (int i = 0; i < points.size(); i++)
         {
-            Imgproc.putText(image, text.get(i), points.get(i), Imgproc.FONT_HERSHEY_SIMPLEX, 1, new org.opencv.core.Scalar(0, 0, 255), 2);
+            Imgproc.putText(image, text.get(i), points.get(i), Imgproc.FONT_HERSHEY_SIMPLEX, 1, new org.opencv.core.Scalar(255, 0, 0), 2);
         }
 
         //HighGui.imshow("Title", image);

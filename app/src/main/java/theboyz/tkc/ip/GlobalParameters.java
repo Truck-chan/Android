@@ -27,6 +27,6 @@ public class GlobalParameters {
 
     // Contour Approximation
     public static double PERIMETER_PERCENTAGE = 0.015;
-    public static double MIN_SPACING = 2000;
+    public static double MIN_SPACING = 3000;
 
 }

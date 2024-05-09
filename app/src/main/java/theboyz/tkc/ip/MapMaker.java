@@ -130,9 +130,7 @@ public class MapMaker {
                     int startContour = removePointFromContour(points.get(i));
                     int endContour = removePointFromContour(points.get(j));
 
-                    if (startContour != endContour) {
-                        System.out.println(startContour + " " + endContour);
-
+                    if (startContour != endContour && startContour != -1 && endContour != -1) {
                         intersectionLines.add(new Line(points.get(i), points.get(j), startContour, endContour));
                     }
                     isValid = false;
