@@ -72,12 +72,13 @@ class MainActivity : ComponentActivity() {
     val viewModel by viewModels<MainViewModel>()
     lateinit var bluetoothAdapter: BluetoothAdapter
 
-    @RequiresApi(Build.VERSION_CODES.S)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val uiManager = getSystemService(UI_MODE_SERVICE) as UiModeManager
-        uiManager.setApplicationNightMode(UiModeManager.MODE_NIGHT_YES)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            val uiManager = getSystemService(UI_MODE_SERVICE) as UiModeManager
+            uiManager.setApplicationNightMode(UiModeManager.MODE_NIGHT_YES)
+        }
         actionBar?.hide()
 
         OpenCVLoader.initLocal()
@@ -106,7 +107,6 @@ class MainActivity : ComponentActivity() {
         }
 
 
-        requestPermissions()
 
         setContent {
             MainLayout()
@@ -143,7 +143,7 @@ class MainActivity : ComponentActivity() {
                     1001
                 )
             }else {
-                Toast.makeText(this, "needs to have bt connect", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "android issues ..", Toast.LENGTH_SHORT).show()
             }
         } else r++
 
@@ -161,6 +161,11 @@ class MainActivity : ComponentActivity() {
                 )
             }
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        requestPermissions()
     }
 
     private val receiver = object : BroadcastReceiver() {
