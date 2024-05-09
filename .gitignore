@@ -9,7 +9,10 @@
 /.idea/assetWizardSettings.xml
 .DS_Store
 /build
+/opencv/
 /captures
 .externalNativeBuild
 .cxx
 local.properties
+/opencv/build
+/opencv/build

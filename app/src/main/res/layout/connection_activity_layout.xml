@@ -302,7 +302,7 @@
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="5"
-                            android:max="200"
+                            android:max="50"
                             android:min="0" />
 
                         <TextView
@@ -336,7 +336,7 @@
                             android:layout_height="wrap_content"
                             android:layout_weight="5"
                             android:max="100"
-                            android:min="70" />
+                            android:min="10" />
 
                         <TextView
                             android:id="@+id/variable_MAX_AREA_PERCENTAGE_value"

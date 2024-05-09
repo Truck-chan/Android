@@ -1,8 +1,11 @@
-package theboyz.tkc.ip;
+package theboyz.tkc.ip.preprocessing.components;
 
 import org.opencv.core.Core;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
+
+import theboyz.tkc.ip.GlobalParameters;
+import theboyz.tkc.ip.ImagePreprocessorElement;
 
 public class AdjustGamma implements ImagePreprocessorElement {
     public Mat execute(Mat image) {
@@ -24,3 +27,6 @@ public class AdjustGamma implements ImagePreprocessorElement {
         return correctedImage;
     }
 }
+
+
+

@@ -1,13 +1,20 @@
-package theboyz.tkc.ip;
+package theboyz.tkc.ip.preprocessing.components;
 
 import org.opencv.core.Core;
 import org.opencv.core.Mat;
 import org.opencv.core.Scalar;
 
+import theboyz.tkc.ip.GlobalParameters;
+import theboyz.tkc.ip.ImagePreprocessorElement;
+
 public class PadImage implements ImagePreprocessorElement {
     public Mat execute(Mat image) {
+        return padImage(image, GlobalParameters.PADDING_AMOUNT);
+    }
+
+    public static Mat padImage(Mat image, int amount)
+    {
         Mat paddedImage = new Mat();
-        int amount = GlobalParameters.PADDING_AMOUNT;
         int constantValue = GlobalParameters.PADDING_CONSTANT;
 
         Core.copyMakeBorder(image,

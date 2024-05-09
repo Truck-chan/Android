@@ -1,16 +1,27 @@
 package theboyz.tkc;
 
+import android.util.Log;
+
 import org.opencv.core.Mat;
 import org.opencv.core.Point;
+import org.opencv.core.Rect;
 import org.opencv.core.Scalar;
+import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
 
-import kotlin.NotImplementedError;
-import theboyz.tkc.ip.AdjustGamma;
-import theboyz.tkc.ip.ApplyOtsuThreshold;
-import theboyz.tkc.ip.ConvertToGray;
-import theboyz.tkc.ip.PadImage;
+import theboyz.tkc.ip.preprocessing.components.AdjustGamma;
+import theboyz.tkc.ip.preprocessing.components.ApplyOtsuThreshold;
+import theboyz.tkc.ip.preprocessing.components.ClosingOperation;
+import theboyz.tkc.ip.preprocessing.components.ConvertToGray;
+import theboyz.tkc.ip.GlobalParameters;
+import theboyz.tkc.ip.preprocessing.components.Erosion;
+import theboyz.tkc.ip.preprocessing.components.GaussianFilter;
+import theboyz.tkc.ip.preprocessing.components.HistogramEnhancement;
+import theboyz.tkc.ip.preprocessing.components.HomogenizeImage;
+import theboyz.tkc.ip.preprocessing.components.PadImage;
 import theboyz.tkc.ip.Sharingan;
+
+import theboyz.tkc.ip.preprocessing.components.MinimumFilter;
 import uni.proj.ec.Command;
 
 public class ImageProcessing {
@@ -28,7 +39,6 @@ public class ImageProcessing {
     }
 
 
-
     private static Sharingan sharingan;
 
     /**
@@ -40,10 +50,19 @@ public class ImageProcessing {
         sharingan = new Sharingan();
         sharingan.addPreprocessorComponent(new ConvertToGray());
         sharingan.addPreprocessorComponent(new AdjustGamma());
+//        sharingan.addPreprocessorComponent(new GaussianFilter());
+//        sharingan.addPreprocessorComponent(new HistogramEnhancement());
         sharingan.addPreprocessorComponent(new ApplyOtsuThreshold());
+//        sharingan.addPreprocessorComponent(new MinimumFilter());
+//        sharingan.addPreprocessorComponent(new HomogenizeImage());
+        sharingan.addPreprocessorComponent(new ClosingOperation());
+        sharingan.addPreprocessorComponent(new Erosion());
 
-        //fixme: Padding doesn't work for now ..
-        //sharingan.addPreprocessorComponent(new PadImage());
+//        sharingan.addPreprocessorComponent(new MedianFilter());
+
+
+
+        sharingan.addPreprocessorComponent(new PadImage());
     }
 
     /**
@@ -64,9 +83,32 @@ public class ImageProcessing {
      * do it here
      * call order : init -> onCameraSize -> (loop) { OnFrame }
      * */
-    public static void OnFrame(Mat frame){}
+
+    public static void OnFrame(Mat frame){
+    }
+
+
 
     static float x = 40;
+
+    public static Mat resizeTo(Mat image, Size imageSize)
+    {
+        if (image.size().width != imageSize.width)
+        {
+            int cropAmount = GlobalParameters.PADDING_AMOUNT;
+            // Define the region of interest (ROI) using a Rect object
+            Rect roi = new Rect(cropAmount, cropAmount, (int) imageSize.width, (int) imageSize.height);
+
+            // Extract the ROI using the submat() method
+            Mat croppedImage = new Mat(image, roi);
+
+            return croppedImage;
+        }
+        else
+        {
+            return image;
+        }
+    }
 
     /**
      * this will be called when the preview mode is active (the "eye" button is toggled ON)
@@ -83,19 +125,29 @@ public class ImageProcessing {
             x = 40;
         }
 
-        switch (id) { // example on how to view more than one preview
-            case 0:
-                Imgproc.circle(frame, new Point(x, 150), 40, new Scalar(255, 255, 255, 255), 15);
-                break;
-            case 1:
-                Imgproc.circle(frame, new Point(x, 150), 40, new Scalar(255, 0, 255, 255), 15);
-                break;
-            case 2:
-                Imgproc.circle(frame, new Point(x, 150), 40, new Scalar(255, 255, 0, 255), 15);
-                break;
-            default:
-                Imgproc.circle(frame, new Point(x, 150), 40, new Scalar(0, 255, 255, 255), 15);
-                break;
+        Size frameSize = frame.size();
+
+        int offset = sharingan.preprocessedImages.size();
+
+        if (id < offset && id >= 0)
+        {
+           resizeTo(sharingan.preprocessedImages.get(id), frameSize).copyTo(frame);
+        }
+        else if (id == offset)
+        {
+            resizeTo(sharingan.mapMaker.reducedNoiseImage, frameSize).copyTo(frame);
+        }
+        else if (id == offset + 1)
+        {
+            resizeTo(sharingan.mapMaker.processedImage, frameSize).copyTo(frame);
+        }
+        else if (id == offset + 2)
+        {
+            resizeTo(sharingan.mapImage, frameSize).copyTo(frame);
+        }
+        else
+        {
+            Imgproc.circle(frame, new Point(x, 150), 40, new Scalar(0, 255, 255, 255), 15);
         }
     }
 
@@ -108,12 +160,7 @@ public class ImageProcessing {
      * @param frame is the current frame
      * */
     public static void OnGameFrame(Mat frame){
-        //sharingan.loadImage(frame);
-        //sharingan.startPreprocessing();
-//        sharingan.loadImage(frame);
-//        sharingan.startPreprocessing();
-//        sharingan.analyseMap();
-        sharingan.mapImage.copyTo(frame);
+        resizeTo(sharingan.getCurrentImage(), frame.size()).copyTo(frame);
     }
 
 
@@ -123,10 +170,10 @@ public class ImageProcessing {
      * call order : init -> onCameraSize -> OnFrame -> (bake button click) onBakeTrackImage
      * */
     public static void onBakeTrackImage(Mat frame){
-        send("let_me_cook{}");
+//        send("let_me_cook{}");
         sharingan.loadImage(frame);
         sharingan.startPreprocessing();
         sharingan.analyseMap();
-        //sharingan.connectContours();
+//        sharingan.connectContours();
     }
 }

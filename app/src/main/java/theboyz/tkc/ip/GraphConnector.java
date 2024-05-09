@@ -1,17 +1,25 @@
 package theboyz.tkc.ip;
 
-import org.opencv.core.Mat;
+import android.util.Log;
+
 import org.opencv.core.Point;
 
 import java.util.ArrayList;
-import java.util.List;
-import java.util.Vector;
+import java.util.Map;
 
 public class GraphConnector {
 
+    ArrayList<Point> connectedMap;
+    private static final String TAG = "GraphConnector";
     private ArrayList<ArrayList<Point>> graphs;
 
     private ArrayList<Line> intersections;
+
+    public GraphConnector(ArrayList<ArrayList<Point>> graphs, ArrayList<Line> intersections)
+    {
+        setgraphs(graphs);
+        this.intersections = intersections;
+    }
 
     private void setgraphs(ArrayList<ArrayList<Point>> toAnalyse)
     {
@@ -22,12 +30,7 @@ public class GraphConnector {
         }
     }
 
-    public GraphConnector(ArrayList<ArrayList<Point>> graphs, ArrayList<Line> intersections)
-    {
-        setgraphs(graphs);
-        this.intersections = intersections;
-    }
-
+    // some math stuff
     private Point getMidPoint(Point A, Point B)
     {
         return new Point((A.x + B.x) / 2, (A.y + B.y) / 2);
@@ -35,16 +38,15 @@ public class GraphConnector {
 
     private double euclideanDistance(Point A, Point B)
     {
-        return (Math.pow(A.x - B.x, 2) + Math.pow(A.y + B.y, 2));
+        return (Math.pow(A.x - B.x, 2) + Math.pow(A.y - B.y, 2));
     }
 
     private int getSign(double x)
     {
-        if (x > 0) return 1;
-        else return -1;
+        return x > 0 ? 1 : 0;
     }
 
-
+    // some geometry stuff
     private ArrayList<ArrayList<Point>> getLastPoints(ArrayList<Point> originalGraph, Line line)
     {
         int prevSign = 1;
@@ -56,8 +58,6 @@ public class GraphConnector {
         ArrayList<ArrayList<Point>> lastPoints = new ArrayList<>();
         lastPoints.add(new ArrayList<>());
         lastPoints.add(new ArrayList<>());
-
-        int toggler = 0;
 
         for (Point point : graph)
         {
@@ -71,11 +71,12 @@ public class GraphConnector {
                 continue;
             }
 
+            int currentSign = getSign(crossProduct);
+
             if ( getSign(crossProduct) != prevSign)
             {
-                lastPoints.get(toggler).add(point);
-                lastPoints.get(1 - toggler).add(prev);
-                toggler = 1 - toggler;
+                lastPoints.get(currentSign).add(point);
+                lastPoints.get(prevSign).add(prev);
             }
 
             prevSign = getSign(crossProduct);
@@ -93,6 +94,7 @@ public class GraphConnector {
         for (Point point : graph)
         {
             double calculatedDistance = euclideanDistance(intersection, point);
+
             if (calculatedDistance < minDistance)
             {
                 minDistance = calculatedDistance;
@@ -102,8 +104,23 @@ public class GraphConnector {
         return minPoint;
     }
 
+    private void printContourPoints(ArrayList<ArrayList<Point>> points)
+    {
+//        Log.i(TAG, "printContourPoints: Upper Points -------------***");
 
-    public void connectTwoContours()
+//        for (int i = 0; i < 2; i++)
+//        {
+//            Log.i(TAG, "printContourPoints: Array List-" + i);
+//            for (int j = 0; j < 2; j++)
+//            {
+//                Log.i(TAG, "Point-"+ j + ":" + points.get(i).get(j).toString());
+//            }
+//        }
+    }
+
+    
+    
+    public void connectContours()
     {
         for (Line line : intersections)
         {
@@ -113,13 +130,16 @@ public class GraphConnector {
             ArrayList<ArrayList<Point>> contourAPoints = getLastPoints(contourA, line);
             ArrayList<ArrayList<Point>> contourBPoints = getLastPoints(contourB, line);
 
+            printContourPoints(contourAPoints);
+            printContourPoints(contourBPoints);
+
             Point midPoint = getMidPoint(line.start, line.end);
             for (int i = 0; i < 2; i++)
             {
                 Point A = getNearestPointsToIntersection(contourAPoints.get(i), midPoint);
                 Point B = getNearestPointsToIntersection(contourBPoints.get(1 - i), midPoint);
 
-                System.out.println("Connect Point (" + A.x + " " + A.y + ") to Point (" + B.x + " " + B.y + ")");
+                Log.i(TAG, "connectTwoContours => " + "Connect Point (" + A.x + " " + A.y + ") to Point (" + B.x + " " + B.y + ")");
             }
 
         }
@@ -130,6 +150,7 @@ public class GraphConnector {
 
 class Line
 {
+    private static final String TAG = "Line";
     Point start;
     Point end;
 
@@ -139,6 +160,15 @@ class Line
     Line(Point start, Point end, int startContour, int endContour){
         this.start = start;
         this.end = end;
+
+        if (this.start.x > this.end.x)
+        {
+            Point temp = this.end.clone();
+            this.end = this.start.clone();
+            this.start = temp.clone();
+        }
+
+//        Log.i(TAG, "Line: start point = " + this.start.toString() + ", end point = " + this.end.toString());
 
         this.startContour = startContour;
         this.endContour = endContour;

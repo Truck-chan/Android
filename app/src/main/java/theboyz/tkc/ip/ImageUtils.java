@@ -44,15 +44,21 @@ public class ImageUtils {
     }
 
     // image is assumed to be binary, so it will throught error if it wasn't
-    static public ArrayList<Contour> findContours(Mat image){
+    static public ArrayList<Contour> findContours(Mat image, Mat out){
 
         if (!ImageUtils.isBinaryImage(image))
             return new ArrayList<>();
 
 
+        image.copyTo(out);
+
         List<MatOfPoint> contours = new ArrayList<>();
         Mat hierarchy = new Mat();
         Imgproc.findContours(image, contours, hierarchy, Imgproc.RETR_TREE, Imgproc.CHAIN_APPROX_SIMPLE);
+
+        for (int i = 0; i < contours.size(); i++) {
+            Imgproc.drawContours(out, contours, i, new Scalar(0, 255, 0), 2);
+        }
 
         ArrayList<Contour> contoursList = new ArrayList<>();
 
@@ -94,7 +100,7 @@ public class ImageUtils {
     {
         for (int i = 0; i < points.size(); i++)
         {
-            Imgproc.putText(image, text.get(i), points.get(i), Imgproc.FONT_HERSHEY_SIMPLEX, 0.5, new org.opencv.core.Scalar(0, 0, 255), 2);
+            Imgproc.putText(image, text.get(i), points.get(i), Imgproc.FONT_HERSHEY_SIMPLEX, 1, new org.opencv.core.Scalar(0, 0, 255), 2);
         }
 
         //HighGui.imshow("Title", image);

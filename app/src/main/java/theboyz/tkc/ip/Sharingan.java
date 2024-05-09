@@ -1,6 +1,8 @@
 package theboyz.tkc.ip;
 
-import org.opencv.core.Core;
+import android.annotation.SuppressLint;
+import android.util.Log;
+
 import org.opencv.core.Mat;
 import org.opencv.imgcodecs.Imgcodecs;
 
@@ -11,7 +13,7 @@ public class Sharingan {
     private Mat currentImage;
     public Mat mapImage;
     private final ImagePreprocessor preprocessor = new ImagePreprocessor();
-    private final MapMaker mapMaker = new MapMaker();
+    public final MapMaker mapMaker = new MapMaker();
     private GraphConnector graphConnector;
 
     public Sharingan()
@@ -24,9 +26,12 @@ public class Sharingan {
         ImageUtils.showImage(currentImage, "Image");
     }
 
+    public Mat originalImage = new Mat();
+
     public void loadImage(Mat image)
     {
         currentImage = image.clone();
+        image.copyTo(originalImage);
     }
 
     public void addPreprocessorComponent(ImagePreprocessorElement element)
@@ -34,12 +39,14 @@ public class Sharingan {
         preprocessor.addComponent(element);
     }
 
+    public ArrayList<Mat> preprocessedImages = new ArrayList<>();
     public void startPreprocessing()
     {
-        currentImage = preprocessor.preprocess(currentImage);
+        currentImage = preprocessor.preprocess(currentImage, preprocessedImages);
     }
 
     public Mat getCurrentImage(){return currentImage;}
+
 
     public void analyseMap()
     {
@@ -47,13 +54,14 @@ public class Sharingan {
         ArrayList<Contour> contours = mapMaker.generateContours();
         mapMaker.generateCriticalPoints(contours);
         mapImage = mapMaker.drawCriticalPointsOnMap();
+        connectContours();
         mapMaker.printContours();
     }
 
     public void connectContours()
     {
         graphConnector = new GraphConnector(mapMaker.graphs, mapMaker.intersectionLines);
-        graphConnector.connectTwoContours();
+        graphConnector.connectContours();
     }
 
 
