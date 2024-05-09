@@ -75,6 +75,8 @@ class ConnectionActivity : AppCompatActivity(){
         btnPreview  = findViewById(R.id.btn_preview)
 
         cameraContainer = findViewById(R.id.camera_container)
+        cameraContainer.setCameraIndex(0);
+
         overlayView = findViewById(R.id.overlay_view)
         chatContainer = findViewById(R.id.chat_container)
         chatContent = findViewById(R.id.chat_content)

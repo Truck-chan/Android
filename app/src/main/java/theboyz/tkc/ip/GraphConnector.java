@@ -5,6 +5,7 @@ import android.util.Log;
 import org.opencv.core.Point;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Map;
 
 public class GraphConnector {
@@ -118,10 +119,9 @@ public class GraphConnector {
 //        }
     }
 
-    
-    
-    public void connectContours()
+    public Map<PointContour, PointContour> connectSeparatedContours()
     {
+        Map<PointContour, PointContour> ret = new HashMap<>();
         for (Line line : intersections)
         {
             ArrayList<Point> contourA = graphs.get(line.startContour);
@@ -139,14 +139,71 @@ public class GraphConnector {
                 Point A = getNearestPointsToIntersection(contourAPoints.get(i), midPoint);
                 Point B = getNearestPointsToIntersection(contourBPoints.get(1 - i), midPoint);
 
+                ret.put(new PointContour(A, line.startContour), new PointContour(B, line.endContour));
+                ret.put(new PointContour(B, line.endContour), new PointContour(A, line.startContour));
                 Log.i(TAG, "connectTwoContours => " + "Connect Point (" + A.x + " " + A.y + ") to Point (" + B.x + " " + B.y + ")");
             }
-
         }
+
+        return ret;
+    }
+
+
+//    ArrayList<Point> lapLine = new ArrayList<>();
+//    Map<Point, Boolean> visited = new HashMap<>();
+//    public void makeLapLine(Map<PointContour, PointContour> connections, Point current, int contour = 0)
+//    {
+//        if (visited.containsKey(current))
+//            return;
+//        visited.put(current , true);
+//
+//        if (!connections.containsKey(current))  // if the point is in the connection points
+//        {
+//            lapLine.add(current);
+//            makeLapLine();
+//        }
+//        else
+//        {
+//
+//        }
+//
+//    }
+    
+    public ArrayList<Connection> connectContours()
+    {
+        Map<PointContour, PointContour> connections = connectSeparatedContours();
+
+        return new ArrayList<>();
+//        makeLapLine(connections);
     }
 }
 
+class PointContour
+{
+    Point point;
+    int contourNumber;
+    PointContour(Point p, int c) {
+        point = p;
+        contourNumber = c;
+    }
+}
 
+class Connection
+{
+    Point point_1;
+    int cont_1;
+
+    Point point_2;
+    int cont_2;
+
+    Connection(Point x, int xc, Point y, int yc)
+    {
+        point_1 = x;
+        cont_1 = xc;
+        point_2 = y;
+        cont_2 = yc;
+    }
+}
 
 class Line
 {
