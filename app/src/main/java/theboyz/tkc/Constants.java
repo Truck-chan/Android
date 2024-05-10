@@ -5,6 +5,6 @@ import theboyz.tkc.comm.SharedMemory;
 
 public class Constants {
     public static final String SERVICE_ID = "00001101-0000-1000-8000-00805f9b34fb"; //SPP UUID
-    public static final boolean START_CAMERA = true;
+    public static final boolean START_CAMERA = false;
     public static ConnectionHelper Connection;
 }
