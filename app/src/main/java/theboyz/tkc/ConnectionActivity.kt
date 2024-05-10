@@ -8,7 +8,6 @@ import android.view.View
 import android.widget.EditText
 import android.widget.ImageButton
 import android.widget.LinearLayout
-import android.widget.ScrollView
 import android.widget.SeekBar
 import android.widget.SeekBar.OnSeekBarChangeListener
 import android.widget.TextView
@@ -18,10 +17,8 @@ import androidx.recyclerview.widget.RecyclerView
 import org.opencv.android.CameraBridgeViewBase
 import org.opencv.android.JavaCamera2View
 import org.opencv.core.Mat
-import theboyz.tkc.comm.packet
-import theboyz.tkc.ip.GlobalParameters
+import theboyz.tkc.ip.utils.GlobalParameters
 import theboyz.tkc.ui.view.Overlay
-import uni.proj.ec.Command
 import uni.proj.ec.command
 import kotlin.concurrent.thread
 
@@ -74,8 +71,10 @@ class ConnectionActivity : AppCompatActivity(){
         btnReg  = findViewById(R.id.btn_registers)
         btnPreview  = findViewById(R.id.btn_preview)
 
-        cameraContainer = findViewById(R.id.camera_container)
-        cameraContainer.setCameraIndex(0);
+        cameraContainer = findViewById(R.id.camera_container);
+        cameraContainer.setCameraIndex(2);
+        // M => index 2 for wide camera
+
 
         overlayView = findViewById(R.id.overlay_view)
         chatContainer = findViewById(R.id.chat_container)

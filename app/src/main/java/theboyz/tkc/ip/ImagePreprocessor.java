@@ -3,26 +3,48 @@ package theboyz.tkc.ip;
 import org.opencv.core.Mat;
 import java.util.ArrayList;
 
-public class ImagePreprocessor {
-    private ArrayList<ImagePreprocessorElement> imagePreprocessorElements = new ArrayList<ImagePreprocessorElement>();
+import theboyz.tkc.ip.preprocessors.ImagePreprocessorElement;
 
-    public ImagePreprocessor() {}
+public class ImagePreprocessor {
+    private final ArrayList<ImagePreprocessorElement> imagePreprocessorElements = new ArrayList<ImagePreprocessorElement>();
+
+    private final ArrayList<Mat> preprocessedImages = new ArrayList<>();
+
+    public ArrayList<Mat> getPreprocessedImages()
+    {
+        return preprocessedImages;
+    }
+
+    public Mat finalPreprocessedImage(){
+        int lastIdx = preprocessedImages.size() - 1;
+        return preprocessedImages.get(lastIdx).clone();
+    }
 
     public void addComponent(ImagePreprocessorElement element)
     {
         imagePreprocessorElements.add(element);
     }
 
-    public Mat preprocess(Mat image, ArrayList<Mat> out)
+    public void clearComponents()
+    {
+        imagePreprocessorElements.clear();
+    }
+    public void reset()
+    {
+        preprocessedImages.clear();
+    }
+
+    public Mat preprocess(Mat image)
     {
         Mat preprocessed = image;
+        preprocessedImages.clear();
+
         for (ImagePreprocessorElement element : imagePreprocessorElements)
         {
             preprocessed = element.execute(preprocessed);
-            Mat cloned = new Mat();
-            preprocessed.copyTo(cloned);
-            out.add(cloned);
+            preprocessedImages.add(preprocessed.clone());
         }
+
         return preprocessed;
     }
 

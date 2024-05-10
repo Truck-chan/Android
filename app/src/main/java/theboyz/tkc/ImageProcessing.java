@@ -1,28 +1,29 @@
 package theboyz.tkc;
 
-import android.util.Log;
-
 import org.opencv.core.Mat;
-import org.opencv.core.Point;
 import org.opencv.core.Rect;
-import org.opencv.core.Scalar;
 import org.opencv.core.Size;
-import org.opencv.imgproc.Imgproc;
 
-import theboyz.tkc.ip.preprocessing.components.AdjustGamma;
-import theboyz.tkc.ip.preprocessing.components.ApplyOtsuThreshold;
-import theboyz.tkc.ip.preprocessing.components.ClosingOperation;
-import theboyz.tkc.ip.preprocessing.components.ConvertToGray;
-import theboyz.tkc.ip.GlobalParameters;
-import theboyz.tkc.ip.preprocessing.components.Erosion;
-import theboyz.tkc.ip.preprocessing.components.GaussianFilter;
-import theboyz.tkc.ip.preprocessing.components.HistogramEnhancement;
-import theboyz.tkc.ip.preprocessing.components.HomogenizeImage;
-import theboyz.tkc.ip.preprocessing.components.PadImage;
+import java.util.ArrayList;
+
+import theboyz.tkc.ip.preprocessors.AdjustGamma;
+import theboyz.tkc.ip.preprocessors.ApplyOtsuThreshold;
+import theboyz.tkc.ip.preprocessors.ClosingOperation;
+import theboyz.tkc.ip.preprocessors.ConvertToGray;
+import theboyz.tkc.ip.utils.GlobalParameters;
+import theboyz.tkc.ip.preprocessors.Erosion;
+import theboyz.tkc.ip.preprocessors.PadImage;
 import theboyz.tkc.ip.Sharingan;
 
-import theboyz.tkc.ip.preprocessing.components.MinimumFilter;
 import uni.proj.ec.Command;
+
+
+enum State
+{
+    BUILDING_MAP,
+    PREVIEWING_CAR_DETECTION,
+    RUNNING
+}
 
 public class ImageProcessing {
 
@@ -40,6 +41,7 @@ public class ImageProcessing {
 
 
     private static Sharingan sharingan;
+    private static State currentState = State.BUILDING_MAP;
 
     /**
      * this will only be called once
@@ -50,18 +52,9 @@ public class ImageProcessing {
         sharingan = new Sharingan();
         sharingan.addPreprocessorComponent(new ConvertToGray());
         sharingan.addPreprocessorComponent(new AdjustGamma());
-//        sharingan.addPreprocessorComponent(new GaussianFilter());
-//        sharingan.addPreprocessorComponent(new HistogramEnhancement());
         sharingan.addPreprocessorComponent(new ApplyOtsuThreshold());
-//        sharingan.addPreprocessorComponent(new MinimumFilter());
-//        sharingan.addPreprocessorComponent(new HomogenizeImage());
         sharingan.addPreprocessorComponent(new ClosingOperation());
         sharingan.addPreprocessorComponent(new Erosion());
-
-//        sharingan.addPreprocessorComponent(new MedianFilter());
-
-
-
         sharingan.addPreprocessorComponent(new PadImage());
     }
 
@@ -75,7 +68,17 @@ public class ImageProcessing {
      * will be called when the play button is pressed
      * will be called once, and it will always come after init & onCameraSize
      * */
-    public static void onGameStarted(){}
+    private static boolean lockState = false;
+    public static void onGameStarted()
+    {
+        if (lockState) return;
+        switch (currentState)
+        {
+            case BUILDING_MAP -> currentState = State.PREVIEWING_CAR_DETECTION;
+            case PREVIEWING_CAR_DETECTION -> currentState = State.RUNNING;
+        }
+        lockState = true;
+    }
 
     /**
      * this will be called every time the camera sends a frame to the application
@@ -84,12 +87,10 @@ public class ImageProcessing {
      * call order : init -> onCameraSize -> (loop) { OnFrame }
      * */
 
-    public static void OnFrame(Mat frame){
+    public static void OnFrame(Mat frame)
+    {
+
     }
-
-
-
-    static float x = 40;
 
     public static Mat resizeTo(Mat image, Size imageSize)
     {
@@ -99,10 +100,7 @@ public class ImageProcessing {
             // Define the region of interest (ROI) using a Rect object
             Rect roi = new Rect(cropAmount, cropAmount, (int) imageSize.width, (int) imageSize.height);
 
-            // Extract the ROI using the submat() method
-            Mat croppedImage = new Mat(image, roi);
-
-            return croppedImage;
+            return new Mat(image, roi);
         }
         else
         {
@@ -119,35 +117,50 @@ public class ImageProcessing {
      *
      * @param frame is the current frame
      * */
-    public static void OnPreview(int id, Mat frame){
-        x += 3;
-        if (x > 400){
-            x = 40;
-        }
 
+    private static void previewMapMaker(int id, Mat frame)
+    {
         Size frameSize = frame.size();
 
-        int offset = sharingan.preprocessedImages.size();
+        ArrayList<Mat> preprocessedImages = sharingan.getPreprocessedImages();
+        ArrayList<Mat> mapMakerImages =  sharingan.getMapMakerDebuggingImages();
 
-        if (id < offset && id >= 0)
+        int preprocessingLength = preprocessedImages.size();
+        int mapMakerLength = mapMakerImages.size();
+
+        if (id < preprocessingLength)
         {
-           resizeTo(sharingan.preprocessedImages.get(id), frameSize).copyTo(frame);
+           resizeTo(preprocessedImages.get(id), frameSize).copyTo(frame);
         }
-        else if (id == offset)
+        else if (id - preprocessingLength < mapMakerLength)
         {
-            resizeTo(sharingan.mapMaker.reducedNoiseImage, frameSize).copyTo(frame);
+            resizeTo(mapMakerImages.get(id - preprocessingLength), frameSize).copyTo(frame);
         }
-        else if (id == offset + 1)
+    }
+
+    private static void previewTrackCar(int id, Mat frame)
+    {
+        Size frameSize = frame.size();
+
+        if (id < sharingan.getCarTrackerDebuggingImages().size())
         {
-            resizeTo(sharingan.mapMaker.processedImage, frameSize).copyTo(frame);
+            resizeTo(sharingan.getCarTrackerDebuggingImages().get(id), frameSize).copyTo(frame);
         }
-        else if (id == offset + 2)
+    }
+
+
+    public static void OnPreview(int id, Mat frame){
+
+        if (id < 0)
+            return;
+
+        if (currentState == State.BUILDING_MAP)
         {
-            resizeTo(sharingan.mapImage, frameSize).copyTo(frame);
+            previewMapMaker(id, frame);
         }
         else
         {
-            Imgproc.circle(frame, new Point(x, 150), 40, new Scalar(0, 255, 255, 255), 15);
+            previewTrackCar(id, frame);
         }
     }
 
@@ -160,7 +173,12 @@ public class ImageProcessing {
      * @param frame is the current frame
      * */
     public static void OnGameFrame(Mat frame){
-        resizeTo(sharingan.getCurrentImage(), frame.size()).copyTo(frame);
+
+        if (currentState == State.RUNNING)
+        {
+            sharingan.trackCar();
+            sharingan.followLine();
+        }
     }
 
 
@@ -170,10 +188,21 @@ public class ImageProcessing {
      * call order : init -> onCameraSize -> OnFrame -> (bake button click) onBakeTrackImage
      * */
     public static void onBakeTrackImage(Mat frame){
-//        send("let_me_cook{}");
-        sharingan.loadImage(frame);
-        sharingan.startPreprocessing();
-        sharingan.analyseMap();
-//        sharingan.connectContours();
+
+        switch (currentState)
+        {
+            case BUILDING_MAP:
+                sharingan.reset();
+                sharingan.loadImage(frame);
+                sharingan.startPreprocessing();
+                sharingan.analyseMap();
+                sharingan.connectContours();
+
+            case PREVIEWING_CAR_DETECTION:
+                sharingan.loadImage(frame);
+                sharingan.trackCar();
+
+        }
+        lockState = false;
     }
 }

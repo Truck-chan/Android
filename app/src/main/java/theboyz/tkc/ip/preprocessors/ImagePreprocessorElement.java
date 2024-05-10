@@ -1,4 +1,4 @@
-package theboyz.tkc.ip;
+package theboyz.tkc.ip.preprocessors;
 
 import org.opencv.core.*;
 import org.opencv.imgproc.Imgproc;

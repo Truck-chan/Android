@@ -1,11 +1,10 @@
-package theboyz.tkc.ip.preprocessing.components;
+package theboyz.tkc.ip.preprocessors;
 
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.imgproc.Imgproc;
 
-import theboyz.tkc.ip.GlobalParameters;
-import theboyz.tkc.ip.ImagePreprocessorElement;
+import theboyz.tkc.ip.utils.GlobalParameters;
 
 public class MinimumFilter implements ImagePreprocessorElement {
     @Override

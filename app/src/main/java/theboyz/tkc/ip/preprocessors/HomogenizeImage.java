@@ -1,4 +1,4 @@
-package theboyz.tkc.ip.preprocessing.components;
+package theboyz.tkc.ip.preprocessors;
 
 import android.util.Log;
 
@@ -13,8 +13,7 @@ import org.opencv.imgproc.Imgproc;
 import java.util.ArrayList;
 import java.util.List;
 
-import theboyz.tkc.ip.GlobalParameters;
-import theboyz.tkc.ip.ImagePreprocessorElement;
+import theboyz.tkc.ip.utils.GlobalParameters;
 
 public class HomogenizeImage implements ImagePreprocessorElement {
 

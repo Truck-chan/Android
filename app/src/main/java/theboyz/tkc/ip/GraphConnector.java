@@ -1,5 +1,8 @@
 package theboyz.tkc.ip;
 
+import static theboyz.tkc.ip.utils.MathUtils.euclideanDistance;
+import static theboyz.tkc.ip.utils.MathUtils.getSign;
+
 import android.util.Log;
 
 import org.opencv.core.Point;
@@ -7,48 +10,31 @@ import org.opencv.core.Point;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
+
+import theboyz.tkc.ip.utils.structs.Line;
+import theboyz.tkc.ip.utils.structs.PointContour;
 
 public class GraphConnector {
-
-    ArrayList<Point> connectedMap;
     private static final String TAG = "GraphConnector";
-    private ArrayList<ArrayList<Point>> graphs;
+    private final ArrayList<ArrayList<Point>> trackGraphs = new ArrayList<>();
+    private final ArrayList<Line> intersections = new ArrayList<>();
 
-    private ArrayList<Line> intersections;
+    // =========================================================================
+    private final Map<PointContour, PointContour> connections = new HashMap<>();
+    public final ArrayList<Point> lapLine = new ArrayList<>();
 
-    public GraphConnector(ArrayList<ArrayList<Point>> graphs, ArrayList<Line> intersections)
+    public void setParameters(ArrayList<ArrayList<Point>> contoursToAnalyse, ArrayList<Line> lines)
     {
-        setgraphs(graphs);
-        this.intersections = intersections;
-    }
+        trackGraphs.clear();
+        intersections.clear();
 
-    private void setgraphs(ArrayList<ArrayList<Point>> toAnalyse)
-    {
-        graphs = new ArrayList<>();
-        for (ArrayList<Point> graph : toAnalyse)
+        for (ArrayList<Point> graph : contoursToAnalyse)
         {
-            graphs.add(new ArrayList<>(graph));
+            trackGraphs.add(new ArrayList<>(graph));
         }
+        intersections.addAll(lines);
     }
 
-    // some math stuff
-    private Point getMidPoint(Point A, Point B)
-    {
-        return new Point((A.x + B.x) / 2, (A.y + B.y) / 2);
-    }
-
-    private double euclideanDistance(Point A, Point B)
-    {
-        return (Math.pow(A.x - B.x, 2) + Math.pow(A.y - B.y, 2));
-    }
-
-    private int getSign(double x)
-    {
-        return x > 0 ? 1 : 0;
-    }
-
-    // some geometry stuff
     private ArrayList<ArrayList<Point>> getLastPoints(ArrayList<Point> originalGraph, Line line)
     {
         int prevSign = 1;
@@ -108,25 +94,25 @@ public class GraphConnector {
 
     private void printContourPoints(ArrayList<ArrayList<Point>> points)
     {
-//        Log.i(TAG, "printContourPoints: Upper Points -------------***");
+        Log.i(TAG, "printContourPoints: Upper Points -------------***");
 
-//        for (int i = 0; i < 2; i++)
-//        {
-//            Log.i(TAG, "printContourPoints: Array List-" + i);
-//            for (int j = 0; j < 2; j++)
-//            {
-//                Log.i(TAG, "Point-"+ j + ":" + points.get(i).get(j).toString());
-//            }
-//        }
+        for (int i = 0; i < 2; i++)
+        {
+            Log.i(TAG, "printContourPoints: Array List-" + i);
+            for (int j = 0; j < 2; j++)
+            {
+                Log.i(TAG, "Point-"+ j + ":" + points.get(i).get(j).toString());
+            }
+        }
     }
 
-    public Map<PointContour, PointContour> connectSeparatedContours()
+    private void connectSeparatedContours()
     {
         Map<PointContour, PointContour> ret = new HashMap<>();
         for (Line line : intersections)
         {
-            ArrayList<Point> contourA = graphs.get(line.startContour);
-            ArrayList<Point> contourB = graphs.get(line.endContour);
+            ArrayList<Point> contourA = trackGraphs.get(line.startContour);
+            ArrayList<Point> contourB = trackGraphs.get(line.endContour);
 
             ArrayList<ArrayList<Point>> contourAPoints = getLastPoints(contourA, line);
             ArrayList<ArrayList<Point>> contourBPoints = getLastPoints(contourB, line);
@@ -134,7 +120,7 @@ public class GraphConnector {
             printContourPoints(contourAPoints);
             printContourPoints(contourBPoints);
 
-            Point midPoint = getMidPoint(line.start, line.end);
+            Point midPoint = line.getMidPoint();
             for (int i = 0; i < 2; i++)
             {
                 Point A = getNearestPointsToIntersection(contourAPoints.get(i), midPoint);
@@ -146,140 +132,57 @@ public class GraphConnector {
             }
         }
 
-        return ret;
+        connections.putAll(ret);
     }
 
-
-
-    ArrayList<Point> lapLine = new ArrayList<>();
-    public void makeLapLine(Map<PointContour, PointContour> connections)
+    private void makeLapLine()
     {
         int currentContour = 0;
         int currentIdx = 1;
 
-        Point initPoint = graphs.get(currentContour).get(currentIdx);
+        Point initPoint = trackGraphs.get(currentContour).get(currentIdx);
         Point nextPoint = initPoint;
         Point currentPoint = nextPoint;
         boolean flag = false;
         int direction = 1;
         do {
             currentPoint = nextPoint;
-            if (connections.containsKey(new PointContour(currentPoint, currentContour)) && !flag)
+
+            PointContour key = new PointContour(currentPoint, currentContour);
+            if (connections.containsKey(key) && !flag)
             {
-                PointContour pc = connections.get(new PointContour(currentPoint, currentContour));
+                PointContour pc = connections.get(key);
+                if (pc == null)
+                {
+                    Log.i("Exception Debug", "makeLapLine: a point contour was null");
+                    return;
+                }
                 nextPoint = pc.point;
                 currentContour = pc.contourNumber;
-                currentIdx = graphs.get(currentContour).indexOf(nextPoint);
+                currentIdx = trackGraphs.get(currentContour).indexOf(nextPoint);
                 direction *= -1;
                 flag = true;
             }
             else
             {
-                int n = graphs.get(currentContour).size();
+                int n = trackGraphs.get(currentContour).size();
                 currentIdx = (currentIdx % n + direction + n) % n;
-                nextPoint = graphs.get(currentContour).get(currentIdx);
+                nextPoint = trackGraphs.get(currentContour).get(currentIdx);
                 flag = false;
             }
-            Log.i(TAG, "makeLapLine: Next Point = " + nextPoint);
+
             lapLine.add(currentPoint);
         } while (nextPoint != initPoint);
     }
     
     public void connectContours()
     {
-        Map<PointContour, PointContour> connections = connectSeparatedContours();
-
-        try {
-            makeLapLine(connections);
-        }
-        catch (Exception e)
-        {
-            Log.i(TAG, "connectContours: Exception " + e.getMessage());
-        }
-
+        connectSeparatedContours();
+        makeLapLine();
         Log.i(TAG, "connectContours: Connected Track = " + lapLine.toString());
     }
 }
 
-class PointContour
-{
-    Point point;
-    int contourNumber;
-    PointContour(Point p, int c) {
-        point = p;
-        contourNumber = c;
-    }
 
-    // Override equals() and hashCode() methods
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        PointContour customKey = (PointContour) o;
-        return point.x == customKey.point.x && point.y == customKey.point.y && contourNumber == customKey.contourNumber;
-    }
 
-    @Override
-    public int hashCode() {
-        return Objects.hash(point.x, point.y, contourNumber);
-    }
-}
 
-class Connection
-{
-    Point point_1;
-    int cont_1;
-
-    Point point_2;
-    int cont_2;
-
-    Connection(Point x, int xc, Point y, int yc)
-    {
-        point_1 = x;
-        cont_1 = xc;
-        point_2 = y;
-        cont_2 = yc;
-    }
-}
-
-class Line
-{
-    private static final String TAG = "Line";
-    Point start;
-    Point end;
-
-    int startContour;
-    int endContour;
-
-    Line(Point start, Point end, int startContour, int endContour){
-        this.start = start;
-        this.end = end;
-
-        if (this.start.x > this.end.x)
-        {
-            Point temp = this.end.clone();
-            this.end = this.start.clone();
-            this.start = temp.clone();
-        }
-
-//        Log.i(TAG, "Line: start point = " + this.start.toString() + ", end point = " + this.end.toString());
-
-        this.startContour = startContour;
-        this.endContour = endContour;
-    }
-
-    public Point subtractPoint(Point p, Point q)
-    {
-        return new Point(p.x - q.x, p.y - q.y);
-    }
-
-    public double crossProduct(Point p, Point q)
-    {
-        return (p.x * q.y - p.y * q.x);
-    }
-
-    public double edgeFunction(Point point)
-    {
-        return crossProduct(subtractPoint(end, start), subtractPoint(point, start));
-    }
-}

@@ -1,10 +1,8 @@
-package theboyz.tkc.ip.preprocessing.components;
+package theboyz.tkc.ip.preprocessors;
 
 import org.opencv.core.Mat;
 import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
-
-import theboyz.tkc.ip.ImagePreprocessorElement;
 
 public class Erosion implements ImagePreprocessorElement {
 

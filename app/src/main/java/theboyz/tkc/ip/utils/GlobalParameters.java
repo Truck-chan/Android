@@ -1,4 +1,4 @@
-package theboyz.tkc.ip;
+package theboyz.tkc.ip.utils;
 
 public class GlobalParameters {
 
@@ -27,6 +27,15 @@ public class GlobalParameters {
 
     // Contour Approximation
     public static double PERIMETER_PERCENTAGE = 0.015;
-    public static double MIN_SPACING = 3000;
+    public static double MIN_SPACING = 1500;
+
+    // order is R G B
+    public static double [] GREEN_THRESHES = {0,70,70,255,20,80};
+    public static double [] RED_THRESHES   = {100, 255, 0, 60, 0, 60};
+//    public static double [] RED_THRESHES   = {0 , 255, 0, 255, 0, 255};
+
+
+
+    public static double CIRCLE_RADIUS_TO_SLOW_DOWN = 5000;
 
 }

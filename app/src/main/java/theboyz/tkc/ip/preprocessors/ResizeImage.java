@@ -1,12 +1,10 @@
-package theboyz.tkc.ip.preprocessing.components;
+package theboyz.tkc.ip.preprocessors;
 
 import android.util.Log;
 
 import org.opencv.core.Mat;
 import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
-
-import theboyz.tkc.ip.ImagePreprocessorElement;
 
 public class ResizeImage implements ImagePreprocessorElement {
     public Mat execute(Mat image) {

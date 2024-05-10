@@ -1,15 +1,13 @@
-package theboyz.tkc.ip.preprocessing.components;
+package theboyz.tkc.ip.preprocessors.carfinder;
 
 import org.opencv.core.Core;
 import org.opencv.core.Mat;
 import org.opencv.core.Point;
 import org.opencv.core.Scalar;
 
-import theboyz.tkc.ip.ImagePreprocessorElement;
+import theboyz.tkc.ip.preprocessors.ImagePreprocessorElement;
 
-public class HistogramEnhancement implements ImagePreprocessorElement {
-
-
+public class ContrastStretch implements ImagePreprocessorElement {
     @Override
     public Mat execute(Mat image) {
         Mat out = new Mat();

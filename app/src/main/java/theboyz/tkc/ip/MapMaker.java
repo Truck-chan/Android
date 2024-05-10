@@ -1,218 +1,197 @@
 package theboyz.tkc.ip;
 
+import static theboyz.tkc.ip.utils.ImageUtils.getContourOfPoint;
+import static theboyz.tkc.ip.utils.ImageUtils.getLeafContours;
+import static theboyz.tkc.ip.utils.ImageUtils.limitedContoursArea;
+import static theboyz.tkc.ip.utils.ImageUtils.removePointFromContour;
+import static theboyz.tkc.ip.utils.MathUtils.euclideanDistance;
+
 import android.util.Log;
 
 import org.opencv.core.*;
 import org.opencv.imgproc.Imgproc;
 
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.Map;
 
-import theboyz.tkc.ip.Contour;
-import theboyz.tkc.ip.GlobalParameters;
-import theboyz.tkc.ip.ImageUtils;
-import theboyz.tkc.ip.Line;
+import theboyz.tkc.ip.utils.Contour;
+import theboyz.tkc.ip.utils.GlobalParameters;
+import theboyz.tkc.ip.utils.ImageUtils;
+import theboyz.tkc.ip.utils.structs.Line;
 
 
 public class MapMaker {
     private Mat mapImage = new Mat();
-
-    public Mat processedImage = new Mat();
-
-    public ArrayList<ArrayList<Point>> graphs = new ArrayList<>();
+    private final ArrayList<Mat> debuggingImages = new ArrayList<>();
+    public ArrayList<ArrayList<Point>> contoursGraph = new ArrayList<>();
     public ArrayList<Line> intersectionLines = new ArrayList<>();
 
-    private ArrayList<Contour> eliminateNoisyContours(int imageArea, ArrayList<Contour> contours)
+    public final ArrayList<Point> turnPoints = new ArrayList<>();
+
+    private final ArrayList<Contour> trackContours = new ArrayList<>();
+
+    // TODO: can be refactored later
+    private void approximateCurveToLines()
     {
-        ArrayList<Contour> filteredContours = new ArrayList<>();
-
-        double minArea = GlobalParameters.MIN_AREA_PERCENTAGE * imageArea;
-        double maxArea = GlobalParameters.MAX_AREA_PERCENTAGE * imageArea;
-
-        for (Contour contour : contours)
+        if (trackContours.isEmpty())
         {
-            double area = Imgproc.contourArea(contour.contourPoints);
-
-            if (area > maxArea || area < minArea)
-                continue;
-
-            filteredContours.add(contour);
+            Log.i("Error", "approximateCurveToLines: track contours is empty");
+            return;
         }
 
-        return filteredContours;
-    }
+        turnPoints.clear();
 
-    private void sortCriticalPoints(ArrayList<Point> points)
-    {
-        Comparator<Point> comparator = new Comparator<Point>() {
-            @Override
-            public int compare(Point p1, Point p2) {
-                if (p1.x != p2.x) return Double.compare(p2.x, p1.x);
-                return Double.compare(p2.y, p1.y);
-            }
-        };
-
-        Collections.sort(points, comparator);
-    }
-
-    private int getLastParentWidth(ArrayList<Contour> contours, int idx)
-    {
-        Contour parent = contours.get(idx);
-
-        while(parent.hierarchy.get(3) != -1)
+        for (int j = 0; j < trackContours.size(); j++)
         {
-            parent = contours.get(parent.hierarchy.get(3));
-        }
+            Contour contour = trackContours.get(j);
 
+            MatOfPoint2f contour2f = new MatOfPoint2f(contour.contourPoints.toArray());
+            double epsilon = GlobalParameters.PERIMETER_PERCENTAGE * Imgproc.arcLength(contour2f, true);
+            MatOfPoint2f approxCurve = new MatOfPoint2f();
+            Imgproc.approxPolyDP(contour2f, approxCurve, epsilon, true);
 
-        Rect boundingRect = Imgproc.boundingRect(parent.contourPoints);
-        return boundingRect.width;
-    }
+            contoursGraph.add(new ArrayList<Point>());
 
-    private ArrayList<Contour> getLeafContours(ArrayList<Contour> contours, int imageWidth, int imageHeight)
-    {
-        ArrayList<Contour> filteredContours = new ArrayList<>();
-
-        Log.i("Get Leaf Contours:", "====================");
-        for (Contour contour : contours)
-        {
-            boolean hasChild = contour.hierarchy.get(2) != -1;
-
-            if (!hasChild)
+            for (int i = 0; i < approxCurve.rows(); i++)
             {
-                int parentIdx = contour.hierarchy.get(3);
-                if (parentIdx != -1)
-                {
-                    if (getLastParentWidth(contours, parentIdx) > 0.4 * imageWidth) {
-
-//                        Log.i("Get Leaf Contours:", "Filtered Area = " + Imgproc.contourArea(contour.contourPoints));
-                        filteredContours.add(contour);
-                    }
-                }
+                Point point = new Point(approxCurve.get(i, 0)[0], approxCurve.get(i, 0)[1]);
+                turnPoints.add(point);
+                contoursGraph.get(j).add(point);
             }
         }
 
-        return eliminateNoisyContours(imageHeight * imageWidth , filteredContours);
     }
 
-    private int euclideanDistance(Point p1, Point p2)
+    private void eliminateVeryNearPoints()
     {
-        return (int) (Math.pow (p1.x - p2.x, 2) + Math.pow(p1.y - p2.y, 2));
-    }
-
-    private int removePointFromContour(Point point)
-    {
-
-        for (int i = 0; i < graphs.size(); i++)
-        {
-            if (graphs.get(i).contains(point)) {
-                graphs.get(i).remove(point);
-                return i;
-            }
-        }
-        return -1;
-    }
-
-    private ArrayList<Point> eliminateVeryNearPoints(ArrayList<Point> points)
-    {
-        sortCriticalPoints(points);
         ArrayList<Point> filteredPoints = new ArrayList<>();
-        for (int i = 0; i < points.size(); i++)
+        for (int i = 0; i < turnPoints.size(); i++)
         {
-            boolean isValid = true;
-            for (int j = i + 1; j < points.size(); j++)
-            {
-                if (euclideanDistance(points.get(i), points.get(j)) <= GlobalParameters.MIN_SPACING)
-                {
-                    int startContour = removePointFromContour(points.get(i));
-                    int endContour = removePointFromContour(points.get(j));
+            int startContour = getContourOfPoint(contoursGraph, turnPoints.get(i));
+            if (startContour == -1) continue; // point is already removed
 
-                    if (startContour != endContour && startContour != -1 && endContour != -1) {
-                        intersectionLines.add(new Line(points.get(i), points.get(j), startContour, endContour));
+            boolean isValid = true;
+            for (int j = i + 1; j < turnPoints.size(); j++)
+            {
+                if (euclideanDistance(turnPoints.get(i), turnPoints.get(j)) <= GlobalParameters.MIN_SPACING)
+                {
+                    int endContour = getContourOfPoint(contoursGraph, turnPoints.get(j));
+                    if (endContour == -1) continue;
+
+                    if (startContour != endContour)
+                    {
+                        Line l = new Line(turnPoints.get(i), turnPoints.get(j), startContour, endContour);
+                        intersectionLines.add(l);
+                        removePointFromContour(contoursGraph.get(startContour), turnPoints.get(i));
+                        removePointFromContour(contoursGraph.get(endContour), turnPoints.get(j));
+                    }
+                    else
+                    {
+                        removePointFromContour(contoursGraph.get(endContour), turnPoints.get(j));
                     }
                     isValid = false;
                     break;
                 }
             }
             if (isValid)
-                filteredPoints.add(points.get(i));
-
+                filteredPoints.add(turnPoints.get(i));
         }
-        return filteredPoints;
+
+        turnPoints.clear();
+        turnPoints.addAll(filteredPoints);
     }
+    public ArrayList<Mat> getDebuggingImages(){return debuggingImages;}
 
     public void setMapImage(Mat image)
     {
         if (ImageUtils.isBinaryImage(image))
+        {
             mapImage = image.clone();
+
+        }
+        else
+            Log.i("Error", "setMapImage: map image is not binary");
     }
 
-    public Mat reducedNoiseImage;
-    public ArrayList<Contour> generateContours()
+    public void reset()
     {
+        debuggingImages.clear();
+        turnPoints.clear();
+        contoursGraph.clear();
+        intersectionLines.clear();
+        trackContours.clear();
+    }
+    public void generateTrackContours()
+    {
+        if(mapImage.empty())
+        {
+            Log.i("Error", "generateTrackContours: map image is empty");
+            return;
+        }
+
+        trackContours.clear();
+
         int imageWidth = mapImage.width();
         int imageHeight = mapImage.height();
         int imageArea = imageWidth * imageHeight;
+        Mat pipelineImage = mapImage.clone();
 
-        ArrayList<Contour> contours = ImageUtils.findContours(mapImage, new Mat());
-        reducedNoiseImage = ImageUtils.makeGrayImageOutOfContours(imageWidth, imageHeight, contours);
-        processedImage = reducedNoiseImage;
+        // find all contours in the image and draw it on a black image
+        ArrayList<Contour> contours = ImageUtils.findContours(pipelineImage, new Mat());
+        pipelineImage = ImageUtils.makeGrayImageOutOfContours(contours, imageWidth, imageHeight);
 
-        ArrayList<Contour> filteredContours = eliminateNoisyContours(imageArea, contours);
-        reducedNoiseImage = ImageUtils.makeGrayImageOutOfContours(imageWidth, imageHeight, filteredContours);
+        // add for preview
+        debuggingImages.add(pipelineImage);
 
+        // remove all noisy contours - a noisy contour has area greater than or less than some range
+        // draw these contours on an image again
+        ArrayList<Contour> filteredContours = ImageUtils.limitedContoursArea(contours, imageArea);
+        pipelineImage = ImageUtils.makeGrayImageOutOfContours(filteredContours, imageWidth, imageHeight);
 
+        // add for preview
+        debuggingImages.add(pipelineImage);
 
-        contours = ImageUtils.findContours(reducedNoiseImage, new Mat());
+        contours = ImageUtils.findContours(pipelineImage, new Mat());
 
-        filteredContours = getLeafContours(contours, imageWidth, imageHeight);
+        try {
+            // find contours for the smaller ones and get all contours with no children
+            filteredContours = getLeafContours(contours, imageWidth);
+        }
+        catch (Exception e)
+        {
+            Log.i("Exception Debug", "generateTrackContours: " + e.getMessage());
+        }
+        filteredContours = limitedContoursArea(filteredContours, imageArea);
+        pipelineImage = ImageUtils.makeGrayImageOutOfContours(filteredContours, imageWidth, imageHeight);
 
+        // add for preview
+        debuggingImages.add(pipelineImage);
 
-        processedImage = ImageUtils.makeGrayImageOutOfContours(imageWidth, imageHeight, filteredContours);
-
-        return filteredContours;
+        trackContours.addAll(filteredContours);
     }
 
-    public void generateCriticalPoints(ArrayList<Contour> contours)
+    public void generateTurnsPoints()
     {
-        int j = 0;
-        ArrayList<Point> criticalPoints = new ArrayList<>();
+        approximateCurveToLines();
+        eliminateVeryNearPoints();
+    }
 
-        for (Contour contour : contours)
+    public void drawCriticalPointsOnImage(Mat originalGrayMap)
+    {
+        if (originalGrayMap.empty())
         {
-            MatOfPoint2f contour2f = new MatOfPoint2f(contour.contourPoints.toArray());
-            double epsilon = GlobalParameters.PERIMETER_PERCENTAGE * Imgproc.arcLength(contour2f, true);
-            MatOfPoint2f approxCurve = new MatOfPoint2f();
-            Imgproc.approxPolyDP(contour2f, approxCurve, epsilon, true);
-
-            graphs.add(new ArrayList<Point>());
-
-            for (int i = 0; i < approxCurve.rows(); i++) {
-                Point point = new Point(approxCurve.get(i, 0)[0], approxCurve.get(i, 0)[1]);
-                Log.i("CRITICAL POINT:" , "point = " + point.toString());
-                criticalPoints.add(point);
-                graphs.get(j).add(point);
-            }
-
-            j++;
+            Log.i("Error", "drawCriticalPointsOnImage: originalGrayMap is empty");
         }
 
-        eliminateVeryNearPoints(criticalPoints);
-    }
-
-    public Mat drawCriticalPointsOnMap()
-    {
-        Mat rgbImage = new Mat();
-        Imgproc.cvtColor(mapImage, rgbImage, Imgproc.COLOR_GRAY2RGB);
+        Mat rgbImage = originalGrayMap.clone();
+        if (originalGrayMap.get(0,0).length < 3)
+        {
+            Imgproc.cvtColor(originalGrayMap, rgbImage, Imgproc.COLOR_GRAY2RGB);
+        }
 
         ArrayList<Point> points = new ArrayList<>();
         ArrayList<String> text = new ArrayList<>();
 
-
-        for (ArrayList<Point> contour : graphs) {
+        for (ArrayList<Point> contour : contoursGraph) {
             for (Point point : contour) {
                 Scalar color = new Scalar(0, 0, 255); // Red color
                 int radius = 5; // Radius of the circle
@@ -227,21 +206,8 @@ public class MapMaker {
             }
         }
         ImageUtils.putTextOnScreen(rgbImage, text, points);
-        return rgbImage;
-    }
 
-    public void printContours()
-    {
-        int i = 0;
-        for(ArrayList<Point> contour : graphs)
-        {
-            System.out.println("Contour " + i + ":-");
-            for (Point point : contour)
-            {
-                System.out.println("\t" +(point.x) + " " + point.y);
-            }
-            System.out.println("=========================================");
-        }
+        debuggingImages.add(rgbImage);
     }
 
 }

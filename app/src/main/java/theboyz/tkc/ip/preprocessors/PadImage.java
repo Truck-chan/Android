@@ -1,11 +1,10 @@
-package theboyz.tkc.ip.preprocessing.components;
+package theboyz.tkc.ip.preprocessors;
 
 import org.opencv.core.Core;
 import org.opencv.core.Mat;
 import org.opencv.core.Scalar;
 
-import theboyz.tkc.ip.GlobalParameters;
-import theboyz.tkc.ip.ImagePreprocessorElement;
+import theboyz.tkc.ip.utils.GlobalParameters;
 
 public class PadImage implements ImagePreprocessorElement {
     public Mat execute(Mat image) {
