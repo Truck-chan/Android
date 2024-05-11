@@ -75,7 +75,7 @@ class ConnectionActivity : AppCompatActivity(){
         // M => index 2 for wide camera
 
         cameraContainer = findViewById(R.id.camera_container)
-        cameraContainer.setCameraIndex(2);
+        cameraContainer.setCameraIndex(0);
 
         overlayView = findViewById(R.id.overlay_view)
         chatContainer = findViewById(R.id.chat_container)

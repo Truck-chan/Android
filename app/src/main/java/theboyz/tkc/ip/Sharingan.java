@@ -100,10 +100,12 @@ public class Sharingan {
     public void drawCarLocation(Mat frame)
     {
         carTracker.drawCarOnFrame(frame);
+        lineFollower.putTargetPoint(frame);
     }
 
     public void followLine()
     {
+        Log.i("Last Step", "followLine: entered");
         lineFollower.setTrack(graphConnector.lapLine);
         lineFollower.followLine(carTracker.getCarInformation());
     }

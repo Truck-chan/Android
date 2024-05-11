@@ -155,7 +155,7 @@ public class CarTracker {
 
     public void drawCarOnFrame(Mat frame)
     {
-        if (carCoordinates == null)
+        if (carCoordinates == null || carCoordinates.start == null || carCoordinates.end == null)
             return;
         Imgproc.line(frame, carCoordinates.start, carCoordinates.end, new Scalar(255,255,0), 2, Imgproc.LINE_AA);
     }

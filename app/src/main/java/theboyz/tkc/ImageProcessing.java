@@ -95,8 +95,16 @@ public class ImageProcessing {
      * call order : init -> onCameraSize -> (loop) { OnFrame }
      * */
 
+    static int x=  0;
     public static void OnFrame(Mat frame)
     {
+        if (x < 40)
+        {
+            x++; return;
+        }
+
+        x = 0;
+
         if (currentState == State.PREVIEWING_CAR_DETECTION)
         {
             printTrackBoundingBoxOnFrame(frame);
@@ -194,6 +202,10 @@ public class ImageProcessing {
 
     public static void OnGameFrame(Mat frame){
 
+
+        if (currentState == State.RUNNING)
+            printTrackBoundingBoxOnFrame(frame);
+
         if (skippedFrames > 60)
         {
             skippedFrames = 0;
@@ -203,8 +215,6 @@ public class ImageProcessing {
             skippedFrames++;
             return;
         }
-        if (currentState != State.PREVIEWING_CAR_DETECTION)
-            printTrackBoundingBoxOnFrame(frame);
 
         if (currentState == State.RUNNING)
         {
