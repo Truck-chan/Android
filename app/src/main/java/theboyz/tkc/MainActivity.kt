@@ -156,7 +156,24 @@ class MainActivity : ComponentActivity() {
             )
         } else r++
 
-        if (r == 4){
+
+        if (ActivityCompat.checkSelfPermission(this , Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED){
+            requestPermissions(
+                arrayOf( Manifest.permission.ACCESS_FINE_LOCATION),
+                1001
+            )
+        } else r++
+
+
+        if (ActivityCompat.checkSelfPermission(this , Manifest.permission.ACCESS_BACKGROUND_LOCATION) != PackageManager.PERMISSION_GRANTED){
+            requestPermissions(
+                arrayOf( Manifest.permission.ACCESS_BACKGROUND_LOCATION),
+                1001
+            )
+        } else r++
+
+
+        if (r == 6){
             if (START_CAMERA) {
                 this.startActivity(
                     Intent(this, ConnectionActivity::class.java)
@@ -285,7 +302,7 @@ fun MainContent() {
                                         if (ActivityCompat.checkSelfPermission(
                                                 ctx,
                                                 Manifest.permission.BLUETOOTH_SCAN
-                                            ) != PackageManager.PERMISSION_GRANTED
+                                            ) != PackageManager.PERMISSION_GRANTED && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
                                         ) {
                                             Toast.makeText(
                                                 ctx,

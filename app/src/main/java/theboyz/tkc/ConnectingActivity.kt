@@ -5,6 +5,7 @@ import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothManager
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.View
@@ -35,7 +36,7 @@ class ConnectingActivity : AppCompatActivity() {
                 if (ActivityCompat.checkSelfPermission(
                         this,
                         BLUETOOTH_CONNECT
-                    ) != PackageManager.PERMISSION_GRANTED
+                    ) != PackageManager.PERMISSION_GRANTED && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
                 ) {
                     Log.e(TAG, "onCreate: Failed to connect (no permission)")
                     throw IllegalStateException("no permission")
