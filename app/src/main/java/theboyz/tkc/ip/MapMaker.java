@@ -13,6 +13,7 @@ import org.opencv.imgproc.Imgproc;
 
 import java.util.ArrayList;
 
+import theboyz.tkc.EventLog;
 import theboyz.tkc.ip.utils.Contour;
 import theboyz.tkc.ip.utils.GlobalParameters;
 import theboyz.tkc.ip.utils.ImageUtils;
@@ -20,6 +21,7 @@ import theboyz.tkc.ip.utils.structs.Line;
 
 
 public class MapMaker {
+    public Size frameSize;
     private Mat mapImage = new Mat();
     private final ArrayList<Mat> debuggingImages = new ArrayList<>();
     public ArrayList<ArrayList<Point>> contoursGraph = new ArrayList<>();
@@ -28,6 +30,9 @@ public class MapMaker {
     public final ArrayList<Point> turnPoints = new ArrayList<>();
 
     private final ArrayList<Contour> trackContours = new ArrayList<>();
+
+    public Mat borderRect = new Mat();
+    public Rect border = new Rect();
 
     // TODO: can be refactored later
     private void approximateCurveToLines()
@@ -119,6 +124,8 @@ public class MapMaker {
         contoursGraph.clear();
         intersectionLines.clear();
         trackContours.clear();
+        border = new Rect();
+        borderRect = new Mat();
     }
     public void generateTrackContours()
     {
@@ -155,6 +162,26 @@ public class MapMaker {
         try {
             // find contours for the smaller ones and get all contours with no children
             filteredContours = getLeafContours(contours, imageWidth);
+
+            Log.i("Notice Me", "generateTrackContours: filtered contour size = " + filteredContours.size() );
+            Log.i("Notice Me", "generateTrackContours: border rect size = " + this.borderRect.size());
+            if(!filteredContours.isEmpty() && this.borderRect.empty())
+            {
+                this.borderRect = new Mat(frameSize, mapImage.type());
+                borderRect.setTo(new Scalar(0));
+                Log.i("Notice Me", "generateTrackContours: Entered" + this.borderRect.size());
+
+                Rect roiRect = filteredContours.get(0).parentBB;
+                roiRect.x -= GlobalParameters.PADDING_AMOUNT;
+                roiRect.y -= GlobalParameters.PADDING_AMOUNT;
+
+                Mat subImage = new Mat(borderRect, roiRect);
+                subImage.setTo(new Scalar(255));
+
+                subImage.copyTo(borderRect.submat(roiRect));
+                border = roiRect;
+                debuggingImages.add(borderRect);
+            }
         }
         catch (Exception e)
         {

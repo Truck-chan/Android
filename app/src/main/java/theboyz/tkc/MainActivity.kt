@@ -136,7 +136,9 @@ class MainActivity : ComponentActivity() {
             )
         } else r++
 
-        if (ActivityCompat.checkSelfPermission(this , Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED){
+        if (ActivityCompat.checkSelfPermission(this , Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED
+            && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
+            ){
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                 requestPermissions(
                     arrayOf( Manifest.permission.BLUETOOTH_CONNECT),

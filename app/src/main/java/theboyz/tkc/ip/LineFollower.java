@@ -6,6 +6,7 @@ import org.opencv.core.Point;
 
 import java.util.ArrayList;
 
+import theboyz.tkc.ImageProcessing;
 import theboyz.tkc.ip.utils.GlobalParameters;
 import theboyz.tkc.ip.utils.MathUtils;
 import theboyz.tkc.ip.utils.structs.Line;
@@ -69,6 +70,7 @@ public class LineFollower {
             // TODO: send to the arduino to slowdown
             currentPointIdx = targetPointIdx;
             targetPointIdx = -1;
+            ImageProcessing.send("Watch_Out_Dog");
         }
         else
         {

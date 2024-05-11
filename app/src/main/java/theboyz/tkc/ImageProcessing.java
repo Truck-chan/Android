@@ -1,5 +1,7 @@
 package theboyz.tkc;
 
+import android.util.Log;
+
 import org.opencv.core.Mat;
 import org.opencv.core.Rect;
 import org.opencv.core.Size;
@@ -74,8 +76,14 @@ public class ImageProcessing {
         if (lockState) return;
         switch (currentState)
         {
-            case BUILDING_MAP -> currentState = State.PREVIEWING_CAR_DETECTION;
-            case PREVIEWING_CAR_DETECTION -> currentState = State.RUNNING;
+            case BUILDING_MAP:
+                currentState = State.PREVIEWING_CAR_DETECTION;
+                sharingan.getPreprocessedImages().clear();
+                sharingan.getMapMakerDebuggingImages().clear();
+                break;
+            case PREVIEWING_CAR_DETECTION:
+                currentState = State.RUNNING;
+                sharingan.getCarTrackerDebuggingImages().clear();
         }
         lockState = true;
     }
@@ -89,7 +97,10 @@ public class ImageProcessing {
 
     public static void OnFrame(Mat frame)
     {
-
+        if (currentState == State.PREVIEWING_CAR_DETECTION)
+        {
+            printTrackBoundingBoxOnFrame(frame);
+        }
     }
 
     public static Mat resizeTo(Mat image, Size imageSize)
@@ -164,6 +175,12 @@ public class ImageProcessing {
         }
     }
 
+
+    private static void printTrackBoundingBoxOnFrame(Mat frame)
+    {
+        sharingan.drawMapBoundingBox(frame);
+    }
+
     /**
      * this function will only be called when the play button is pressed.
      *  call order : init -> onCameraSize -> (loop) { OnFrame -> (play button ON ?) OnGameFrame }
@@ -172,13 +189,36 @@ public class ImageProcessing {
      *
      * @param frame is the current frame
      * */
+
+    static int skippedFrames = 0;
+
     public static void OnGameFrame(Mat frame){
+
+        if (skippedFrames > 60)
+        {
+            skippedFrames = 0;
+        }
+        else
+        {
+            skippedFrames++;
+            return;
+        }
+        if (currentState != State.PREVIEWING_CAR_DETECTION)
+            printTrackBoundingBoxOnFrame(frame);
 
         if (currentState == State.RUNNING)
         {
-            sharingan.trackCar();
-            sharingan.followLine();
+            sharingan.loadImage(frame);
+            try {
+                sharingan.trackCar();
+                sharingan.followLine();
+            } catch (Exception e)
+            {
+                Log.i("Exception Debug", "OnGameFrame: " + e.getMessage());
+            }
         }
+
+        sharingan.drawCarLocation(frame);
     }
 
 
@@ -197,6 +237,8 @@ public class ImageProcessing {
                 sharingan.startPreprocessing();
                 sharingan.analyseMap();
                 sharingan.connectContours();
+
+                break;
 
             case PREVIEWING_CAR_DETECTION:
                 sharingan.loadImage(frame);

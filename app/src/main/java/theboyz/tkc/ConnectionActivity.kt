@@ -3,6 +3,7 @@ package theboyz.tkc
 import android.app.AlertDialog
 import android.graphics.Color
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.widget.EditText
@@ -286,6 +287,7 @@ class ConnectionActivity : AppCompatActivity(){
                 ImageProcessing.onBakeTrackImage(temp)
                 true
             } catch (e: Exception){
+                Log.i("Exception Debug", "bakeAction: " + e.message);
                 EventLog.e("Bake Process failed with error : ${e.message}")
                 false
             }

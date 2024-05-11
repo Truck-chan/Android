@@ -7,7 +7,7 @@ import org.opencv.imgproc.Imgproc;
 public class ClosingOperation implements ImagePreprocessorElement {
     @Override
     public Mat execute(Mat image) {
-        int kernelSize = 9;
+        int kernelSize = 7;
         // Create a structuring element (kernel) for morphological operations
         Mat kernel = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(kernelSize, kernelSize));
 

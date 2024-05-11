@@ -84,7 +84,8 @@ public class ImageUtils {
         contour.remove(point);
     }
 
-    static public int getLastContourParentWidth(ArrayList<Contour> contours, int idx)
+
+    static public Rect getLastContourParentRect(ArrayList<Contour> contours, int idx)
     {
         Contour parent = contours.get(idx);
 
@@ -93,8 +94,12 @@ public class ImageUtils {
             parent = contours.get(parent.hierarchy.get(3));
         }
 
+        return Imgproc.boundingRect(parent.contourPoints);
+    }
 
-        Rect boundingRect = Imgproc.boundingRect(parent.contourPoints);
+    static public int getLastContourParentWidth(ArrayList<Contour> contours, int idx)
+    {
+        Rect boundingRect = getLastContourParentRect(contours, idx);
         return boundingRect.width;
     }
 
@@ -133,6 +138,7 @@ public class ImageUtils {
 
             if (!hasChild && hasParent && wideParent)
             {
+                contour.parentBB = getLastContourParentRect(contours, parentIdx);
                 filteredContours.add(contour);
             }
         }

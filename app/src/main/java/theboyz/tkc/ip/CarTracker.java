@@ -27,6 +27,8 @@ public class CarTracker {
     private Mat redObjects = new Mat();
     private Mat greenObjects = new Mat();
 
+    public Mat trackMask = new Mat();
+
     private Mat preprocessChannel(Mat channel)
     {
         preprocessor.clearComponents();
@@ -85,12 +87,14 @@ public class CarTracker {
         }
 
         Mat threshold = new Mat();
+        Mat out = new Mat();
 
         Mat combinedChannel = new Mat();
         Core.bitwise_and(channels.get(0), channels.get(1), combinedChannel);
         Core.bitwise_and(combinedChannel, channels.get(2), threshold);
+        Core.bitwise_and(threshold, trackMask, out);
 
-        return threshold;
+        return out;
     }
 
     public void segment(Mat image) {
@@ -131,6 +135,7 @@ public class CarTracker {
 
     public void setCurrentFrame(Mat frame){frame.copyTo(currentFrame);}
 
+
     public void findCar()
     {
         debuggingImages.clear();
@@ -144,8 +149,14 @@ public class CarTracker {
         preprocessFrame();
         segment(currentFrame);
         changeCarInformation();
-
-
     }
 
+
+
+    public void drawCarOnFrame(Mat frame)
+    {
+        if (carCoordinates == null)
+            return;
+        Imgproc.line(frame, carCoordinates.start, carCoordinates.end, new Scalar(255,255,0), 2, Imgproc.LINE_AA);
+    }
 }

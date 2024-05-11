@@ -11,11 +11,11 @@ public class GlobalParameters {
 
 
     // Gamma Correction Component
-    public static double GAMMA_VALUE = 0.7;
+    public static double GAMMA_VALUE = 0.54;
 
     // Contour Detection
     public static double MIN_AREA_PERCENTAGE = 0.011;
-    public static double MAX_AREA_PERCENTAGE = 0.39;
+    public static double MAX_AREA_PERCENTAGE = 0.24;
     public static double MAX_CONTOUR_POINTS = 400;
     public static double MIN_CONTOUR_POINTS = 100;
 
@@ -30,8 +30,8 @@ public class GlobalParameters {
     public static double MIN_SPACING = 1500;
 
     // order is R G B
-    public static double [] GREEN_THRESHES = {0,70,70,255,20,80};
-    public static double [] RED_THRESHES   = {100, 255, 0, 60, 0, 60};
+    public static double [] GREEN_THRESHES = {0,40,60,255,0,40};
+    public static double [] RED_THRESHES   = {20, 255, 0, 60, 0, 60};
 //    public static double [] RED_THRESHES   = {0 , 255, 0, 255, 0, 255};
 
 
