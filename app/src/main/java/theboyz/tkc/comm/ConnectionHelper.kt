@@ -106,7 +106,7 @@ class ConnectionHelper(
                     if (offset >= _minReadSize){
                         if (_quantize && _waitForReady != -1){
                             var r = true
-                            for (i in 0..<_minReadSize){
+                            for (i in 0 until _minReadSize){
                                 if (buffer[i] != _waitForReady.toByte()){
                                     r = false
                                     break

@@ -88,7 +88,7 @@ public class LineFollower {
         }
         else
         {
-            ImageProcessing.send("kemof");
+            //ImageProcessing.send("kemof");
             Log.i("bluetooth debug", "checkPointDomainExpansion: " + distance);
             // TODO: send to arduino to keep going
         }
@@ -100,10 +100,16 @@ public class LineFollower {
             return;
         carCoordinates = newCarCoordinates;
         Log.i("Last Step", "Line follower - followLine: entered");
-        if(currentPointIdx == -1) setInitialPoint();
-        Log.i("Last Step", "Line follower - currentPointIdx: set = " + currentPointIdx);
-        if(targetPointIdx == -1) setNextPoint(newCarCoordinates);
-        Log.i("Last Step", "Line follower - targetPointIdx: set = " + targetPointIdx);
+        if(currentPointIdx == -1)
+        {
+            setInitialPoint();
+            Log.i("Last Step", "Line follower - currentPoint: set = " + track.get(currentPointIdx) );
+        }
+        if(targetPointIdx == -1)
+        {
+            setNextPoint(newCarCoordinates);
+            Log.i("Last Step", "Line follower - targetPointIdx: set = " + targetPointIdx);
+        }
         checkPointDomainExpansion(newCarCoordinates.getMidPoint());
     }
 
@@ -112,7 +118,7 @@ public class LineFollower {
     {
         if (track != null && track.isEmpty() && targetPointIdx < 0)
             return;
-        Imgproc.circle(frame, track.get(targetPointIdx), 5, new Scalar(255,0,255), 2);
+        Imgproc.circle(frame, track.get(targetPointIdx), 25, new Scalar(255,0,255), 2);
     }
 
 

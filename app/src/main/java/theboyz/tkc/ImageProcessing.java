@@ -2,11 +2,19 @@ package theboyz.tkc;
 
 import android.util.Log;
 
+import org.opencv.core.Core;
+import org.opencv.core.CvType;
 import org.opencv.core.Mat;
+import org.opencv.core.MatOfPoint;
+import org.opencv.core.Point;
 import org.opencv.core.Rect;
+import org.opencv.core.Scalar;
 import org.opencv.core.Size;
+import org.opencv.imgproc.Imgproc;
 
+import java.lang.reflect.Type;
 import java.util.ArrayList;
+import java.util.List;
 
 import theboyz.tkc.ip.preprocessors.AdjustGamma;
 import theboyz.tkc.ip.preprocessors.ApplyOtsuThreshold;
@@ -17,6 +25,7 @@ import theboyz.tkc.ip.preprocessors.Erosion;
 import theboyz.tkc.ip.preprocessors.PadImage;
 import theboyz.tkc.ip.Sharingan;
 
+import theboyz.tkc.ui.vec2;
 import uni.proj.ec.Command;
 
 
@@ -42,7 +51,18 @@ public class ImageProcessing {
     }
 
 
-    private static Sharingan sharingan;
+    private static final Sharingan sharingan;
+
+    static {
+        // will only be called once ..
+        sharingan = new Sharingan();
+        sharingan.addPreprocessorComponent(new ConvertToGray());
+        sharingan.addPreprocessorComponent(new AdjustGamma());
+        sharingan.addPreprocessorComponent(new ApplyOtsuThreshold());
+        sharingan.addPreprocessorComponent(new ClosingOperation());
+        sharingan.addPreprocessorComponent(new Erosion());
+        sharingan.addPreprocessorComponent(new PadImage());
+    }
     private static State currentState = State.BUILDING_MAP;
 
     /**
@@ -51,13 +71,7 @@ public class ImageProcessing {
      * will be the first function to be called
      * */
     public static void init(){
-        sharingan = new Sharingan();
-        sharingan.addPreprocessorComponent(new ConvertToGray());
-        sharingan.addPreprocessorComponent(new AdjustGamma());
-        sharingan.addPreprocessorComponent(new ApplyOtsuThreshold());
-        sharingan.addPreprocessorComponent(new ClosingOperation());
-        sharingan.addPreprocessorComponent(new Erosion());
-        sharingan.addPreprocessorComponent(new PadImage());
+
     }
 
     /**
@@ -95,19 +109,95 @@ public class ImageProcessing {
      * call order : init -> onCameraSize -> (loop) { OnFrame }
      * */
 
-    static int x=  0;
-    public static void OnFrame(Mat frame)
+    private static Mat carMaskingFrame = new Mat();
+    private static ArrayList<Point> maskingFramePoints = new ArrayList<>();
+
+
+    private static Point getPointFromVec2(vec2 p, Size frameSize)
     {
-        if (x < 40)
+        return new Point(
+                p.x * frameSize.width,
+                p.y * frameSize.height
+        );
+    }
+    private static void makeNewMask(Size frameSize, int frameType)
+    {
+        List<Point> points = new ArrayList<>();
+        points.add(getPointFromVec2(GlobalParameters.clipPoints[0], frameSize));
+        points.add(getPointFromVec2(GlobalParameters.clipPoints[1], frameSize));
+        points.add(getPointFromVec2(GlobalParameters.clipPoints[2], frameSize));
+        points.add(getPointFromVec2(GlobalParameters.clipPoints[3], frameSize));
+
+        maskingFramePoints.clear();
+        maskingFramePoints.addAll(points);
+
+        MatOfPoint matPt = new MatOfPoint();
+        matPt.fromList(points);
+        List<MatOfPoint> ppt = new ArrayList<MatOfPoint>();
+        ppt.add(matPt);
+
+        Log.i("Variable Debug", "makeNewMask: =============================");
+        for (Point p : points)
         {
-            x++; return;
+            Log.i("Variable Debug", "makeNewMask: point = " + p.toString());
         }
 
-        x = 0;
+        carMaskingFrame.setTo(new Scalar(0, 0, 0));
 
-        if (currentState == State.PREVIEWING_CAR_DETECTION)
+        Size maskSize = new Size(frameSize.width, frameSize.height);
+        Mat temp = new Mat(maskSize, frameType);
+        Imgproc.fillPoly(temp,
+                ppt,
+                new Scalar(255, 255, 255),
+                Imgproc.LINE_8,
+                0,
+                new Point(0,0) );
+        Imgproc.cvtColor(temp, carMaskingFrame, Imgproc.COLOR_RGBA2GRAY);
+        temp.release();
+    }
+
+    static private boolean maskPointsChanged(Size frameSize)
+    {
+        for (int i = 0; i < 4; i++)
         {
-            printTrackBoundingBoxOnFrame(frame);
+            if (
+                    GlobalParameters.clipPoints[i].x * frameSize.width != maskingFramePoints.get(i).x
+                            ||
+                    GlobalParameters.clipPoints[i].y * frameSize.height != maskingFramePoints.get(i).y
+            )
+                return true;
+        }
+        return false;
+    }
+
+    static int x = 0;
+    static long time = -1;
+    public static void OnFrame(Mat frame)
+    {
+//        if (System.currentTimeMillis() - time > 500){
+//            if (x == 0){
+//                send("kemo");
+//                x = 1;
+//            }else{
+//                x = 0;
+//                send("kemof");
+//            }
+//            time = System.currentTimeMillis();
+//            Log.i("Spam_TEST", "OnFrame: Spamming");
+//        }
+        // draw the bounding box for the image
+        if (currentState != State.BUILDING_MAP)
+        {
+            if (maskingFramePoints.isEmpty() || maskPointsChanged(frame.size()))
+            {
+                try {
+                    makeNewMask(frame.size(), frame.type());
+                }
+                catch (Exception e)
+                {
+                    Log.e("Exception Debug", "OnFrame: " , e);
+                }
+            }
         }
     }
 
@@ -170,6 +260,14 @@ public class ImageProcessing {
 
     public static void OnPreview(int id, Mat frame){
 
+
+        if (false){
+
+            frame.setTo(new Scalar(0));
+            makeNewMask(frame.size() , frame.type());
+            carMaskingFrame.copyTo(frame);
+            return;
+        }
         if (id < 0)
             return;
 
@@ -206,7 +304,9 @@ public class ImageProcessing {
         if (currentState == State.RUNNING)
             printTrackBoundingBoxOnFrame(frame);
 
-        if (skippedFrames > 60)
+        sharingan.drawCarLocation(frame);
+
+        if (skippedFrames > 15)
         {
             skippedFrames = 0;
         }
@@ -220,15 +320,13 @@ public class ImageProcessing {
         {
             sharingan.loadImage(frame);
             try {
-                sharingan.trackCar();
+                sharingan.trackCar(carMaskingFrame);
                 sharingan.followLine();
             } catch (Exception e)
             {
                 Log.i("Exception Debug", "OnGameFrame: " + e.getMessage());
             }
         }
-
-        sharingan.drawCarLocation(frame);
     }
 
 
@@ -252,7 +350,7 @@ public class ImageProcessing {
 
             case PREVIEWING_CAR_DETECTION:
                 sharingan.loadImage(frame);
-                sharingan.trackCar();
+                sharingan.trackCar(carMaskingFrame);
 
         }
         lockState = false;

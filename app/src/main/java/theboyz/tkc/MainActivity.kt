@@ -149,6 +149,21 @@ class MainActivity : ComponentActivity() {
             }
         } else r++
 
+        if (ActivityCompat.checkSelfPermission(
+                this,
+                Manifest.permission.BLUETOOTH_SCAN
+            ) != PackageManager.PERMISSION_GRANTED
+            && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
+        ) {
+
+            ActivityCompat.requestPermissions(
+                this,
+                arrayOf(Manifest.permission.BLUETOOTH_SCAN),
+                1001,
+            )
+
+        }
+
         if (ActivityCompat.checkSelfPermission(this , Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED){
             requestPermissions(
                 arrayOf( Manifest.permission.ACCESS_COARSE_LOCATION),
@@ -306,21 +321,21 @@ fun MainContent() {
                                         ) {
                                             Toast.makeText(
                                                 ctx,
-                                                "Ayo gimme permission",
+                                                "Try again",
                                                 Toast.LENGTH_SHORT
                                             ).show()
 
-                                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                                                ActivityCompat.requestPermissions(
-                                                    ctx,
-                                                    arrayOf(Manifest.permission.BLUETOOTH_SCAN),
-                                                    10,
-                                                )
-                                            }
+                                            ActivityCompat.requestPermissions(
+                                                ctx,
+                                                arrayOf(Manifest.permission.BLUETOOTH_SCAN),
+                                                10,
+                                            )
 
                                         } else {
                                             Log.i(TAG, "MainContent: Starting Discovery")
-                                            ctx.bluetoothAdapter.startDiscovery()
+                                            if (!ctx.bluetoothAdapter.startDiscovery()){
+                                                Toast.makeText(ctx , "Failed to start search" , Toast.LENGTH_SHORT).show()
+                                            }
                                             ctx.viewModel.usersList.clear()
                                         }
                                     } else {

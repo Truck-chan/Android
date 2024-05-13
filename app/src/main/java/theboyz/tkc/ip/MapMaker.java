@@ -165,23 +165,6 @@ public class MapMaker {
 
             Log.i("Notice Me", "generateTrackContours: filtered contour size = " + filteredContours.size() );
             Log.i("Notice Me", "generateTrackContours: border rect size = " + this.borderRect.size());
-            if(!filteredContours.isEmpty() && this.borderRect.empty())
-            {
-                this.borderRect = new Mat(frameSize, mapImage.type());
-                borderRect.setTo(new Scalar(0));
-                Log.i("Notice Me", "generateTrackContours: Entered" + this.borderRect.size());
-
-                Rect roiRect = filteredContours.get(0).parentBB;
-                roiRect.x -= GlobalParameters.PADDING_AMOUNT;
-                roiRect.y -= GlobalParameters.PADDING_AMOUNT;
-
-                Mat subImage = new Mat(borderRect, roiRect);
-                subImage.setTo(new Scalar(255));
-
-                subImage.copyTo(borderRect.submat(roiRect));
-                border = roiRect;
-                debuggingImages.add(borderRect);
-            }
         }
         catch (Exception e)
         {

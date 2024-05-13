@@ -75,7 +75,7 @@ class ConnectionActivity : AppCompatActivity(){
         // M => index 2 for wide camera
 
         cameraContainer = findViewById(R.id.camera_container)
-        cameraContainer.setCameraIndex(0);
+        cameraContainer.setCameraIndex(2);
 
         overlayView = findViewById(R.id.overlay_view)
         chatContainer = findViewById(R.id.chat_container)
@@ -148,24 +148,19 @@ class ConnectionActivity : AppCompatActivity(){
                         synchronized(FrameLock) {
                             CurrentFrame = inputFrame.rgba()
                             CurrentFrame.copyTo(temp)
+                            overlayView.refresh(CurrentFrame.width() , CurrentFrame.height())
                         }
 
-                        var img: Mat = Mat();
-                        temp.copyTo(img)
-                        ImageProcessing.OnFrame(img)
+                        ImageProcessing.OnFrame(temp)
                         synchronized(FrameLock) {
-                            img.copyTo(CurrentFrame);
+                            temp.copyTo(CurrentFrame);
                         }
-                        img.copyTo(temp)
+
                         if (gameRunning){
                             //FIXME: some redundant copying is happening here
-                            temp.copyTo(img)
-                            ImageProcessing.OnGameFrame(img)
-                            img.copyTo(temp)
+                            ImageProcessing.OnGameFrame(temp)
                         } else if (previewRunning){
-                            temp.copyTo(img)
-                            ImageProcessing.OnPreview(currentPreviewIndex, img)
-                            img.copyTo(temp)
+                            ImageProcessing.OnPreview(currentPreviewIndex, temp)
                         }
                         return temp
                     }

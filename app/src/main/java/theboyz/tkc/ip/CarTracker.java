@@ -86,14 +86,17 @@ public class CarTracker {
                     new Scalar(upperThreshold.val[i]), channels.get(i));
         }
 
+
         Mat threshold = new Mat();
         Mat out = new Mat();
 
         Mat combinedChannel = new Mat();
         Core.bitwise_and(channels.get(0), channels.get(1), combinedChannel);
         Core.bitwise_and(combinedChannel, channels.get(2), threshold);
-        Core.bitwise_and(threshold, trackMask, out);
-
+        if (!trackMask.empty())
+            Core.bitwise_and(threshold, trackMask, out);
+        else
+            threshold.copyTo(out);
         return out;
     }
 
@@ -103,6 +106,10 @@ public class CarTracker {
 
         redObjects = image.clone();
         greenObjects = image.clone();
+
+         debuggingImages.add(trackMask);
+
+        Log.i("Variable Debug", "segment: track mask channels = " + trackMask.get(0,0).length);
 
         redObjects   = removeChannels(redObjects,RedThreshes);
         greenObjects = removeChannels(greenObjects,GreenThreshes);
@@ -123,14 +130,25 @@ public class CarTracker {
     public Line  getCarInformation(){return carCoordinates;}
     private void changeCarInformation()
     {
-        Point x = findCenterPoints(redObjects);
-        Point y = findCenterPoints(greenObjects);
-        Line line = new Line(x,y, 0,0);
+        try
+        {
+            Log.i("Exception Debug", "changeCarInformation: fox fox ");
 
-        Mat lineOnImage = currentFrame.clone();
-        this.carCoordinates = line;
-        Imgproc.line(lineOnImage, line.start, line.end, new Scalar(255,255,0), 2);
-        debuggingImages.add(lineOnImage);
+            Point x = findCenterPoints(redObjects);
+            Point y = findCenterPoints(greenObjects);
+            Line line = new Line(x,y, 0,0);
+
+            Log.i("Exception Debug", "changeCarInformation: fox fox " + x.toString() + y.toString());
+
+            Mat lineOnImage = currentFrame.clone();
+            this.carCoordinates = line;
+            Imgproc.line(lineOnImage, line.start, line.end, new Scalar(255,255,0), 2);
+            debuggingImages.add(lineOnImage);
+        }
+        catch (Exception e)
+        {
+            Log.e("Exception Debug", "changeCarInformation: ", e);
+        }
     }
 
     public void setCurrentFrame(Mat frame){frame.copyTo(currentFrame);}

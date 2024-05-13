@@ -71,7 +71,6 @@ public class Sharingan {
             mapMaker.generateTrackContours();
             mapMaker.generateTurnsPoints();
             mapMaker.drawCriticalPointsOnImage(currentFrame);
-            carTracker.trackMask = mapMaker.borderRect;
 
         }catch (Exception e)
         {
@@ -90,10 +89,17 @@ public class Sharingan {
         }
     }
 
-    public void trackCar()
+    public void trackCar(Mat mask)
     {
-        carTracker.setCurrentFrame(currentFrame);
-        carTracker.findCar();
+        try {
+            carTracker.trackMask = mask;
+            carTracker.setCurrentFrame(currentFrame);
+            carTracker.findCar();
+        }
+        catch (Exception e)
+        {
+            Log.e("Exception Debug", "trackCar: ", e);
+        }
     }
 
 

@@ -75,7 +75,7 @@ class SharedMemory(var socket: BluetoothSocket) {
     }
 
     fun refresh(){
-        for (i in 0..<memSize){
+        for (i in 0 until memSize){
             if (_mDataChange[i].toInt() == 1){
                 val arr = _mData[i]
                 _helper.send(Packet(byteArrayOf(
