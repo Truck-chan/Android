@@ -146,6 +146,7 @@ public class ImageProcessing {
 
         Size maskSize = new Size(frameSize.width, frameSize.height);
         Mat temp = new Mat(maskSize, frameType);
+        temp.setTo(new Scalar(0,0,0));
         Imgproc.fillPoly(temp,
                 ppt,
                 new Scalar(255, 255, 255),
@@ -153,7 +154,6 @@ public class ImageProcessing {
                 0,
                 new Point(0,0) );
         Imgproc.cvtColor(temp, carMaskingFrame, Imgproc.COLOR_RGBA2GRAY);
-        temp.release();
     }
 
     static private boolean maskPointsChanged(Size frameSize)
