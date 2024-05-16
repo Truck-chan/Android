@@ -38,7 +38,7 @@ public class GlobalParameters {
 
 
 
-    public static double CIRCLE_RADIUS_TO_SLOW_DOWN = 10000;
+    public static double CIRCLE_RADIUS_TO_SLOW_DOWN = 5000;
 
     public static vec2 p0 = new vec2(0,0);
     public static vec2 p1 = new vec2(1,0);

@@ -88,7 +88,7 @@ public class LineFollower {
         }
         else
         {
-            //ImageProcessing.send("kemof");
+            ImageProcessing.send("kemof");
             Log.i("bluetooth debug", "checkPointDomainExpansion: " + distance);
             // TODO: send to arduino to keep going
         }

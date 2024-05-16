@@ -306,7 +306,7 @@ public class ImageProcessing {
 
         sharingan.drawCarLocation(frame);
 
-        if (skippedFrames > 15)
+        if (skippedFrames > 7)
         {
             skippedFrames = 0;
         }
