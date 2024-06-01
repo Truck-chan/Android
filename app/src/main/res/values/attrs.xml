@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<resources>
+    <declare-styleable name="ControllerView">
+        <attr name="width_percent_of_view" format="float" />
+        <attr name="height_percent_of_view" format="float" />
+        <attr name="center_oval_color" format="color" />
+        <attr name="outer_oval_color" format="color" />
+    </declare-styleable>
+</resources>
+

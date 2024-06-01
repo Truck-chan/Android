@@ -13,19 +13,50 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_weight="1"
         app:layout_constraintStart_toEndOf="@+id/side_buttons_linearlayout"
-        app:layout_constraintVertical_weight="1" >
+        app:layout_constraintVertical_weight="1">
 
         <org.opencv.android.JavaCamera2View
             android:id="@+id/camera_container"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"/>
+            android:layout_height="match_parent" />
 
         <theboyz.tkc.ui.view.Overlay
             android:id="@+id/overlay_view"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"/>
+            android:layout_height="match_parent" />
+
 
     </FrameLayout>
+
+    <theboyz.tkc.ui.view.ControllerView
+        android:visibility="invisible"
+        android:id="@+id/controller_x_axis"
+        android:layout_marginBottom="16dp"
+        android:layout_marginLeft="16dp"
+        android:layout_width="160dp"
+        android:layout_height="160dp"
+        android:padding="20dp"
+        app:width_percent_of_view="0.4"
+        app:height_percent_of_view="0.4"
+        app:center_oval_color="#673AB7"
+        app:outer_oval_color="#673AB7"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="@+id/open_panel_content" />
+
+    <theboyz.tkc.ui.view.ControllerView
+        android:visibility="invisible"
+        android:id="@+id/controller_y_axis"
+        android:layout_marginBottom="16dp"
+        android:layout_marginLeft="16dp"
+        android:layout_width="160dp"
+        android:layout_height="160dp"
+        android:padding="20dp"
+        app:width_percent_of_view="0.4"
+        app:height_percent_of_view="0.4"
+        app:center_oval_color="#CDDC39"
+        app:outer_oval_color="#673AB7"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="@+id/open_panel_content" />
 
     <LinearLayout
         android:id="@+id/side_buttons_linearlayout"
@@ -59,11 +90,12 @@
                 android:src="@drawable/baseline_data_object_24" />
 
             <ImageButton
-                android:id="@+id/btn_clip"
+                app:tint="#000000"
+                android:id="@+id/btn_game"
                 android:layout_width="50dp"
                 android:layout_height="50dp"
-                android:onClick="openRegistersView"
-                android:src="@drawable/baseline_content_cut_24" />
+                android:onClick="openGameMode"
+                android:src="@drawable/baseline_videogame_asset_24" />
         </LinearLayout>
 
         <View
@@ -167,6 +199,7 @@
                 android:layout_height="1dp" />
 
             <ImageButton
+                android:id="@+id/btn_bake"
                 android:layout_width="50dp"
                 android:layout_height="50dp"
                 android:onClick="bakeAction"

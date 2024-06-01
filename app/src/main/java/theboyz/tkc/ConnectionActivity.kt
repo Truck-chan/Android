@@ -11,6 +11,7 @@ import android.widget.ImageButton
 import android.widget.LinearLayout
 import android.widget.SeekBar
 import android.widget.SeekBar.OnSeekBarChangeListener
+import android.widget.SeekBar.VISIBLE
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
@@ -19,7 +20,10 @@ import org.opencv.android.CameraBridgeViewBase
 import org.opencv.android.JavaCamera2View
 import org.opencv.core.Mat
 import theboyz.tkc.ip.utils.GlobalParameters
+import theboyz.tkc.ui.view.ControllerView
+import theboyz.tkc.ui.view.OnOvalMoveListener
 import theboyz.tkc.ui.view.Overlay
+import uni.proj.ec.Command
 import uni.proj.ec.command
 import kotlin.concurrent.thread
 
@@ -143,6 +147,19 @@ class ConnectionActivity : AppCompatActivity(){
                 var temp: Mat = Mat()
 
                 override fun onCameraFrame(inputFrame: CameraBridgeViewBase.CvCameraViewFrame?): Mat {
+                    if (gameMode){
+                        if (System.currentTimeMillis() - lastGameCommandTS >= GameCommandDelta){
+                            lastGameCommandTS = System.currentTimeMillis()
+                            Log.i(TAG, "onCameraFrame: Sending Game Command ${gameXValue} , ${gameYValue}")
+                            Communicator.send(
+                                Command("game" , arrayOf(
+                                    Command.CommandArgument("x" , (gameXValue * 300 + 300).toInt()) ,
+                                    Command.CommandArgument("y" , (gameYValue * 300 + 300).toInt())
+                                ))
+                            )
+                        }
+                    }
+
                     if (inputFrame != null) {
 
                         synchronized(FrameLock) {
@@ -361,6 +378,48 @@ class ConnectionActivity : AppCompatActivity(){
         updateButtonsStats()
     }
 
+    var gameMode = false
+    var gameXValue = 0.0f
+    var gameYValue = 0.0f
+    var lastGameCommandTS: Long = 0
+    var GameCommandDelta = 100 //in ms
+    fun openGameMode(view: View) {
+        if (!gameMode){
+            findViewById<Overlay>(R.id.overlay_view).visibility = View.INVISIBLE
+            findViewById<ImageButton>(R.id.btn_play).visibility = View.INVISIBLE
+            findViewById<ImageButton>(R.id.btn_bake).visibility = View.INVISIBLE
+
+            var xAxis = findViewById<ControllerView>(R.id.controller_x_axis);
+            xAxis.visibility = View.VISIBLE
+            xAxis.onOvalMoveListener = object : OnOvalMoveListener {
+                override fun onOvalMove(x: Float, y: Float) {
+                    gameXValue = x
+                }
+            }
+
+            var yAxis = findViewById<ControllerView>(R.id.controller_y_axis);
+            yAxis.visibility = View.VISIBLE
+            yAxis.onOvalMoveListener = object : OnOvalMoveListener {
+                override fun onOvalMove(x: Float, y: Float) {
+                    gameYValue = -y
+                }
+            }
+
+            gameMode = true
+
+            (view as ImageButton).setImageResource(R.drawable.baseline_videogame_asset_off_24)
+
+        } else {
+            findViewById<Overlay>(R.id.overlay_view).visibility = View.VISIBLE
+            findViewById<ImageButton>(R.id.btn_play).visibility = View.VISIBLE
+            findViewById<ImageButton>(R.id.btn_bake).visibility = View.VISIBLE
+            findViewById<ControllerView>(R.id.controller_y_axis).visibility = View.INVISIBLE
+            findViewById<ControllerView>(R.id.controller_x_axis).visibility = View.INVISIBLE
+
+            gameMode = false
+            (view as ImageButton).setImageResource(R.drawable.baseline_videogame_asset_24)
+        }
+    }
 
 
 }
