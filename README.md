@@ -68,6 +68,25 @@ then we connect points P1A with P2B and P1B with P2A.
 knowing that the line follower must conatin Hamiltonian Path then this algorithm is guaranteed to work.
 
 
+## <div style="color: #ff1a1a;"> 3- Detection Of The Car </div>
+
+to detect the robot, we installed two pieces of papers having two different colors (red and green), this was used to detect the center of the car approximately and its direction so that we can estimate which node in the constructed graph is the neares to the car by using its <b>Center</b>.
+
+and by knowing the car direction we can determine which node in the constructed graph is the next point for the car to begin tracking the car distance to the point
+
+the next image shows a successful detection of the car.
+
+![car detection](./readme_assets/car_detected.png)
+you can see the yellow line on the papers indicating the car position and it's direction vector.
+
+
+## <div style="color: #ff1a1a;"> 4- Tracking Process</div>
+after setting all the previous environment and making sure that every thing works properly we start tracking the car by measuring the distance between the car and the next point determined in step 3.
+
+when the car gets near to the next point, a command to slow down the car is sent to the arduino to slow it down and in the same time we change the point to the next one in the constructed track graph.
+
+the process of calculating distance is repeated every 10 frames so that it won't crash the application and in the same time a reasonable checking delay wrt the car maximum speed.
+
 # <div style="color: #ff1a1a"> Steps </div>
 
 1- download openCV (android version) : https://github.com/opencv/opencv/releases
