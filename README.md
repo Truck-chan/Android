@@ -1,14 +1,10 @@
 
-<center style="display:flex; justify-content: center; align-items: center; gap:10px">
- <img src="./readme_assets/icon.ico" height="32px" width="32px"> 
- 
- <div style="font-size:32px; font-weight: bold; background: linear-gradient(to right,#ff0000, #111111, #ff0101); -webkit-background-clip: text; -webkit-text-fill-color: transparent;"> SHARINGAN </div>
- 
- <img src="./readme_assets/icon.ico" height="32px" width="32px"> 
- </center>
 
-
-# <div style="color: #ff1a1a"> Overview </div>
+<img src="./readme_assets/icon.ico" align="left" alt="Left Icon" width="100"/>
+<br>
+<h1 align="center">
+  SHARINGAN
+</h1>
 
 a Kotlin android application used to communicate with a line follower robot to track its motion and control its speed whenever it's approching a turn using a bluetooth connection for data communication and opencv for image processing and computer vision techniques.
 
